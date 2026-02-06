@@ -16,10 +16,32 @@ const register = async (req, res, next) => {
   try {
     const { firstName, lastName = '', email, password } = req.body || {};
 
-    if (!firstName || !email || !password) {
+    if (!firstName || !String(firstName).trim()) {
       return res.status(400).json({
         success: false,
-        error: 'First name, email, and password are required'
+        error: 'First name is required'
+      });
+    }
+
+    if (!email || !String(email).trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password is required'
+      });
+    }
+
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(String(email).trim())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
       });
     }
 
@@ -36,7 +58,7 @@ const register = async (req, res, next) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        error: 'Email already registered. Please login.'
+        error: 'Email already registered. Please login instead.'
       });
     }
 
@@ -61,6 +83,12 @@ const register = async (req, res, next) => {
       message: 'Registration successful'
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already registered'
+      });
+    }
     return next(error);
   }
 };

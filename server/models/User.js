@@ -9,13 +9,12 @@ const { Schema } = mongoose;
 const userSchema = new Schema({
   userId: {
     type: String,
-    required: true,
     unique: true
     // Format: U-XXXX
   },
   firstName: {
     type: String,
-    required: true,
+    required: [true, 'First name is required'],
     trim: true,
     maxlength: 50
   },
@@ -27,7 +26,7 @@ const userSchema = new Schema({
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'Email is required'],
     unique: true,
     trim: true,
     lowercase: true,
@@ -35,8 +34,8 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
-    required: true,
-    minlength: 6
+    required: [true, 'Password is required'],
+    minlength: [6, 'Password must be at least 6 characters']
   },
   createdAt: {
     type: Date,
@@ -74,7 +73,7 @@ const generateUniqueUserId = async () => {
 /**
  * Generate userId before saving.
  */
-userSchema.pre('save', async function handlePreSave(next) {
+userSchema.pre('validate', async function handlePreValidate(next) {
   try {
     if (this.isNew && !this.userId) {
       this.userId = await generateUniqueUserId();

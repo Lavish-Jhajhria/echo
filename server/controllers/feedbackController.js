@@ -127,10 +127,34 @@ const createFeedback = async (req, res, next) => {
     const { userId, userName, userEmail, message } = req.body;
 
     // Quick required-field check before hitting Mongoose
-    if (!userId || !userName || !userEmail || !message) {
+    if (!userId) {
       return res.status(400).json({
         success: false,
-        error: 'User information and message are required'
+        error: 'User ID is required. Please login first.'
+      });
+    }
+    if (!userName) {
+      return res.status(400).json({
+        success: false,
+        error: 'User name is required'
+      });
+    }
+    if (!userEmail) {
+      return res.status(400).json({
+        success: false,
+        error: 'User email is required'
+      });
+    }
+    if (!message || !String(message).trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Feedback message is required'
+      });
+    }
+    if (String(message).length > 1000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message cannot exceed 1000 characters'
       });
     }
 
@@ -141,7 +165,7 @@ const createFeedback = async (req, res, next) => {
       // Backward compatible fields
       name: userName,
       email: userEmail,
-      message,
+      message: String(message).trim(),
       likes: 0,
       likedBy: [],
       commentCount: 0,
@@ -154,7 +178,13 @@ const createFeedback = async (req, res, next) => {
       data: feedback
     });
   } catch (error) {
-    // Let the error middleware handle this
+    if (error?.name === 'ValidationError') {
+      const messages = Object.values(error.errors || {}).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        error: messages.join(', ') || 'Validation error'
+      });
+    }
     return next(error);
   }
 };

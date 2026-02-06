@@ -13,41 +13,47 @@ const feedbackSchema = new Schema(
   {
     userId: {
       type: String,
-      required: [true, 'User ID is required'],
-      ref: 'User'
+      required: function requireUserId() {
+        // Only required for new auth-based feedback
+        return Boolean(this.userName);
+      },
+      ref: 'User',
+      trim: true
     },
     userEmail: {
       type: String,
-      required: [true, 'User email is required'],
       trim: true,
       lowercase: true
     },
     userName: {
       type: String,
-      required: [true, 'User name is required'],
       trim: true,
-      maxlength: [120, 'User name must be at most 120 characters']
+      maxlength: [100, 'User name must be at most 100 characters']
     },
     name: {
       type: String,
-      required: [true, 'Name is required'],
       trim: true,
-      maxlength: [100, 'Name must be at most 100 characters']
+      maxlength: [100, 'Name must be at most 100 characters'],
+      default: function defaultName() {
+        return this.userName || '';
+      }
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
       trim: true,
       lowercase: true,
       maxlength: [254, 'Email must be at most 254 characters'],
       match: [
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         'Please provide a valid email address'
-      ]
+      ],
+      default: function defaultEmail() {
+        return this.userEmail || '';
+      }
     },
     message: {
       type: String,
-      required: [true, 'Message is required'],
+      required: [true, 'Feedback message is required'],
       trim: true,
       maxlength: [1000, 'Message must be at most 1000 characters']
     },
@@ -56,7 +62,8 @@ const feedbackSchema = new Schema(
       default: Date.now
     },
     updatedAt: {
-      type: Date
+      type: Date,
+      default: Date.now
     },
     likes: {
       type: Number,
@@ -102,6 +109,13 @@ const feedbackSchema = new Schema(
  */
 feedbackSchema.pre('save', function handlePreSave(next) {
   this.updatedAt = new Date();
+  // Ensure legacy fields are populated from auth fields when present.
+  if (this.userName && !this.name) {
+    this.name = this.userName;
+  }
+  if (this.userEmail && !this.email) {
+    this.email = this.userEmail;
+  }
   next();
 });
 

@@ -12,12 +12,22 @@ const mongoose = require('mongoose');
 const connectDatabase = async (mongoUri) => {
   try {
     // Basic Mongoose options
-    await mongoose.connect(mongoUri, {
+    const conn = await mongoose.connect(mongoUri, {
       autoIndex: true
     });
 
     // eslint-disable-next-line no-console
-    console.log('MongoDB connected successfully');
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    // eslint-disable-next-line no-console
+    console.log(`📁 Database: ${conn.connection.name}`);
+
+    try {
+      const collections = await conn.connection.db.listCollections().toArray();
+      // eslint-disable-next-line no-console
+      console.log(`📊 Collections: ${collections.map((c) => c.name).join(', ') || '(none yet)'}`);
+    } catch (e) {
+      // ignore collection listing errors
+    }
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('MongoDB connection error:', error.message);
