@@ -10,6 +10,7 @@ const path = require('path');
 
 const connectDatabase = require('./config/database');
 const feedbackRoutes = require('./routes/feedbackRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 // Load env vars from .env
@@ -24,6 +25,9 @@ app.use(morgan('dev'));
 
 // Feedback API routes
 app.use('/', feedbackRoutes);
+
+// Admin API routes
+app.use('/api/admin', adminRoutes);
 
 // Simple health check
 app.get('/api/health', (req, res) => {

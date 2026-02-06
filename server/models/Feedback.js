@@ -56,6 +56,19 @@ const feedbackSchema = new Schema(
       type: Number,
       default: 0,
       min: 0
+    },
+    status: {
+      type: String,
+      enum: ['normal', 'flagged', 'hidden', 'removed', 'review'],
+      default: 'normal'
+    },
+    isVisible: {
+      type: Boolean,
+      default: true
+    },
+    adminNotes: {
+      type: String,
+      default: ''
     }
   },
   {

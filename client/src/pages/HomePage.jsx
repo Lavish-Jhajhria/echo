@@ -3,10 +3,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FeedbackForm from '../components/FeedbackForm';
 import FeedbackList from '../components/FeedbackList';
 import FeedbackFilters from '../components/FeedbackFilters';
 import { getAllFeedbacks, searchFeedbacks } from '../services/feedbackService';
+import AdminLoginModal from '../components/admin/AdminLoginModal';
 
 const USER_EMAIL_KEY = 'echo_user_email';
 
@@ -15,6 +17,7 @@ const USER_EMAIL_KEY = 'echo_user_email';
  * @returns {JSX.Element}
  */
 const HomePage = () => {
+  const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +28,7 @@ const HomePage = () => {
     youOnly: false
   });
   const [userEmail, setUserEmail] = useState('');
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   /**
    * Fetch all feedback from the API.
@@ -181,6 +185,26 @@ const HomePage = () => {
           title="Results"
         />
       </section>
+
+      {/* Admin Access - Add at bottom of HomePage */}
+      <div className="mt-8 text-center">
+        <button
+          type="button"
+          onClick={() => setShowAdminLogin(true)}
+          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+        >
+          Admin? Click here
+        </button>
+      </div>
+
+      <AdminLoginModal
+        isOpen={showAdminLogin}
+        onClose={() => setShowAdminLogin(false)}
+        onSuccess={() => {
+          setShowAdminLogin(false);
+          navigate('/admin', { replace: true });
+        }}
+      />
     </main>
   );
 };
