@@ -90,7 +90,7 @@ const OverviewPage = () => {
           icon={<Users className="w-5 h-5" />}
         />
         <KPICard
-          title="This Week"
+          title="Comments (This Week)"
           value={stats?.thisWeekCount ?? (loading ? '…' : 0)}
           icon={<MessageSquare className="w-5 h-5" />}
         />

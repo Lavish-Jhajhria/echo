@@ -11,6 +11,23 @@ const { Schema } = mongoose;
  */
 const feedbackSchema = new Schema(
   {
+    userId: {
+      type: String,
+      required: [true, 'User ID is required'],
+      ref: 'User'
+    },
+    userEmail: {
+      type: String,
+      required: [true, 'User email is required'],
+      trim: true,
+      lowercase: true
+    },
+    userName: {
+      type: String,
+      required: [true, 'User name is required'],
+      trim: true,
+      maxlength: [120, 'User name must be at most 120 characters']
+    },
     name: {
       type: String,
       required: [true, 'Name is required'],

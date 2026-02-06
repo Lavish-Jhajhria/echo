@@ -32,7 +32,7 @@ const getClientIdentifier = () => {
 
 /**
  * Submit new feedback.
- * @param {Object} feedbackData - name, email, message
+ * @param {Object} feedbackData - { userId, userName, userEmail, message }
  * @returns {Promise<Object>}
  */
 export const submitFeedback = async (feedbackData) => {

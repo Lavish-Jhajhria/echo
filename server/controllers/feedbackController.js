@@ -124,20 +124,29 @@ const searchFeedbacks = async (req, res, next) => {
  */
 const createFeedback = async (req, res, next) => {
   try {
-    const { name, email, message } = req.body;
+    const { userId, userName, userEmail, message } = req.body;
 
     // Quick required-field check before hitting Mongoose
-    if (!name || !email || !message) {
+    if (!userId || !userName || !userEmail || !message) {
       return res.status(400).json({
         success: false,
-        error: 'Name, email, and message are required'
+        error: 'User information and message are required'
       });
     }
 
     const feedback = await Feedback.create({
-      name,
-      email,
-      message
+      userId,
+      userName,
+      userEmail,
+      // Backward compatible fields
+      name: userName,
+      email: userEmail,
+      message,
+      likes: 0,
+      likedBy: [],
+      commentCount: 0,
+      status: 'normal',
+      isVisible: true
     });
 
     return res.status(201).json({

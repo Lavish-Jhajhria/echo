@@ -6,8 +6,7 @@ import React, { useState } from 'react';
 import { formatDate } from '../utils/formatDate';
 import { deleteFeedback, getClientId, toggleLike } from '../services/feedbackService';
 import ModalComponent from './ModalComponent';
-
-const USER_EMAIL_KEY = 'echo_user_email';
+import authService from '../services/authService';
 
 const isWithinLast7Days = (dateString) => {
   const created = new Date(dateString);
@@ -43,13 +42,10 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
     typeof localFeedback.commentCount === 'number' ? localFeedback.commentCount : 0;
   const showLastWeek = isWithinLast7Days(localFeedback.createdAt);
 
-  let userEmail = '';
-  try {
-    userEmail = window.localStorage.getItem(USER_EMAIL_KEY) || '';
-  } catch (e) {
-    userEmail = '';
-  }
-  const showYou = Boolean(userEmail) && String(localFeedback.email).toLowerCase() === userEmail.toLowerCase();
+  const currentUser = authService.getLoggedInUser();
+  const showYou = Boolean(currentUser?.userId)
+    ? localFeedback.userId === currentUser.userId
+    : false;
 
   /**
    * Open confirm modal when user wants to delete.

@@ -3,22 +3,22 @@
  */
 
 import React, { useState } from 'react';
+import { User as UserIcon } from 'lucide-react';
 import { submitFeedback } from '../services/feedbackService';
-import { validateFeedbackForm } from '../utils/validation';
+import authService from '../services/authService';
 
 const MESSAGE_MAX_LENGTH = 1000;
-const USER_EMAIL_KEY = 'echo_user_email';
 
 /**
  * Form for submitting feedback.
  * @param {Object} props - Component props
  * @param {Function} props.onFeedbackSubmitted - Called after a successful submit
+ * @param {Function} props.onRequireAuth - Called when user needs to login/signup
  * @returns {JSX.Element}
  */
-const FeedbackForm = ({ onFeedbackSubmitted }) => {
+const FeedbackForm = ({ onFeedbackSubmitted, onRequireAuth }) => {
+  const currentUser = authService.getLoggedInUser();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
     message: ''
   });
 
@@ -26,6 +26,25 @@ const FeedbackForm = ({ onFeedbackSubmitted }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  if (!currentUser) {
+    return (
+      <div className="echo-card p-6 sm:p-7 lg:p-8 text-center">
+        <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">Login required</h2>
+        <p className="text-sm text-slate-400 mb-6">
+          Please login or sign up to submit feedback. Your feedback will be linked to your user ID.
+        </p>
+        <button
+          type="button"
+          onClick={() => onRequireAuth?.()}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold text-sm shadow-soft-lg"
+        >
+          <UserIcon className="w-4 h-4" />
+          Login / Sign Up
+        </button>
+      </div>
+    );
+  }
 
   /**
    * Handle input changes.
@@ -53,6 +72,21 @@ const FeedbackForm = ({ onFeedbackSubmitted }) => {
   };
 
   /**
+   * Validate current form.
+   * @returns {Object} { isValid, errors }
+   */
+  const validate = () => {
+    const nextErrors = {};
+    if (!formData.message || !formData.message.trim()) {
+      nextErrors.message = 'Message is required.';
+    } else if (formData.message.trim().length > 1000) {
+      nextErrors.message = 'Message must be at most 1000 characters.';
+    }
+
+    return { isValid: Object.keys(nextErrors).length === 0, errors: nextErrors };
+  };
+
+  /**
    * Handle form submit + API call.
    * @param {Object} event - Submit event
    * @returns {Promise<void>}
@@ -62,7 +96,7 @@ const FeedbackForm = ({ onFeedbackSubmitted }) => {
     setSuccessMessage('');
     setErrorMessage('');
 
-    const validationResult = validateFeedbackForm(formData);
+    const validationResult = validate();
 
     if (!validationResult.isValid) {
       setErrors(validationResult.errors);
@@ -71,18 +105,15 @@ const FeedbackForm = ({ onFeedbackSubmitted }) => {
 
     try {
       setIsSubmitting(true);
-      await submitFeedback(formData);
-
-      // Store email for "You" quick filter
-      try {
-        window.localStorage.setItem(USER_EMAIL_KEY, formData.email);
-      } catch (e) {
-        // ignore
-      }
+      const userName = `${currentUser.firstName} ${currentUser.lastName || ''}`.trim();
+      await submitFeedback({
+        userId: currentUser.userId,
+        userName,
+        userEmail: currentUser.email,
+        message: formData.message
+      });
 
       setFormData({
-        name: '',
-        email: '',
         message: ''
       });
 
@@ -111,41 +142,16 @@ const FeedbackForm = ({ onFeedbackSubmitted }) => {
         Tell us what&apos;s working, what&apos;s not, and what you wish existed.
       </p>
 
+      <div className="mb-5 rounded-xl border border-slate-700/60 bg-slate-900/30 px-4 py-3">
+        <p className="text-xs text-slate-400">Submitting as</p>
+        <p className="text-sm font-semibold text-white">
+          {currentUser.firstName} {currentUser.lastName}
+          <span className="ml-2 text-xs font-medium text-slate-400">{currentUser.userId}</span>
+        </p>
+        <p className="text-xs text-slate-400">{currentUser.email}</p>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-200 mb-1.5">
-            Name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            className="echo-input"
-            placeholder="Lavish"
-            value={formData.name}
-            onChange={handleChange}
-            disabled={isSubmitting}
-          />
-          {errors.name && <p className="mt-1 text-xs text-error">{errors.name}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-1.5">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            className="echo-input"
-            placeholder="you@example.com"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={isSubmitting}
-          />
-          {errors.email && <p className="mt-1 text-xs text-error">{errors.email}</p>}
-        </div>
-
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label
@@ -163,7 +169,7 @@ const FeedbackForm = ({ onFeedbackSubmitted }) => {
             name="message"
             rows={5}
             className="echo-textarea"
-            placeholder="Minimum 50 character required"
+            placeholder="Share your feedback…"
             value={formData.message}
             onChange={handleChange}
             disabled={isSubmitting}

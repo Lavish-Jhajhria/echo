@@ -4,11 +4,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LogOut, User as UserIcon } from 'lucide-react';
 import FeedbackForm from '../components/FeedbackForm';
 import FeedbackList from '../components/FeedbackList';
 import FeedbackFilters from '../components/FeedbackFilters';
 import { getAllFeedbacks, searchFeedbacks } from '../services/feedbackService';
 import AdminLoginModal from '../components/admin/AdminLoginModal';
+import AuthModal from '../components/AuthModal';
+import authService from '../services/authService';
 
 const USER_EMAIL_KEY = 'echo_user_email';
 
@@ -18,6 +21,7 @@ const USER_EMAIL_KEY = 'echo_user_email';
  */
 const HomePage = () => {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,6 +33,8 @@ const HomePage = () => {
   });
   const [userEmail, setUserEmail] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAdminFromAuth, setShowAdminFromAuth] = useState(false);
 
   /**
    * Fetch all feedback from the API.
@@ -85,14 +91,23 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
+    // Restore logged-in user (if any)
+    const user = authService.getLoggedInUser();
+    if (user) {
+      setCurrentUser(user);
+      setUserEmail(user.email);
+    }
+  }, []);
+
+  useEffect(() => {
     // Restore user's email (used for "You" quick filter + badges)
     try {
       const stored = window.localStorage.getItem(USER_EMAIL_KEY) || '';
-      setUserEmail(stored);
+      if (!currentUser?.email) setUserEmail(stored);
     } catch (e) {
       setUserEmail('');
     }
-  }, []);
+  }, [currentUser?.email]);
 
   useEffect(() => {
     // Debounce keyword typing so we don't spam the API.
@@ -109,13 +124,8 @@ const HomePage = () => {
    * @returns {Promise<void>}
    */
   const handleFeedbackSubmitted = async () => {
-    // Store email for "You" quick filter
-    try {
-      const stored = window.localStorage.getItem(USER_EMAIL_KEY) || '';
-      setUserEmail(stored);
-    } catch (e) {
-      // ignore
-    }
+    // Keep "You" filter synced to current user
+    if (currentUser?.email) setUserEmail(currentUser.email);
 
     // If any filters are active, re-run search; otherwise load all.
     const hasAny =
@@ -147,8 +157,53 @@ const HomePage = () => {
     await loadFeedbacks();
   };
 
+  const handleAuthSuccess = (user) => {
+    setCurrentUser(user);
+    setUserEmail(user.email);
+    try {
+      window.localStorage.setItem(USER_EMAIL_KEY, user.email);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+  };
+
   return (
-    <main className="max-w-6xl mx-auto px-4 py-10 sm:py-12 lg:py-16">
+    <main className="relative max-w-6xl mx-auto px-4 py-10 sm:py-12 lg:py-16">
+      <div className="absolute top-6 right-4 sm:right-6">
+        {currentUser ? (
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <div className="text-sm font-medium text-white">
+                {currentUser.firstName} {currentUser.lastName}
+              </div>
+              <div className="text-xs text-slate-400">{currentUser.userId}</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors text-sm border border-slate-700"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowAuthModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg font-medium transition-all shadow-lg text-sm"
+          >
+            <UserIcon className="w-4 h-4" />
+            <span>Login / Sign Up</span>
+          </button>
+        )}
+      </div>
+
       <header className="mb-10 sm:mb-12 lg:mb-14 text-center sm:text-left">
         <p className="text-xs font-semibold tracking-[0.3em] text-primary-500 uppercase mb-4">
           Feedback Collector
@@ -174,7 +229,10 @@ const HomePage = () => {
       />
 
       <section className="grid gap-8 lg:gap-10 lg:grid-cols-2 items-start">
-        <FeedbackForm onFeedbackSubmitted={handleFeedbackSubmitted} />
+        <FeedbackForm
+          onFeedbackSubmitted={handleFeedbackSubmitted}
+          onRequireAuth={() => setShowAuthModal(true)}
+        />
 
         <FeedbackList
           feedbacks={feedbacks}
@@ -186,23 +244,26 @@ const HomePage = () => {
         />
       </section>
 
-      {/* Admin Access - Add at bottom of HomePage */}
-      <div className="mt-8 text-center">
-        <button
-          type="button"
-          onClick={() => setShowAdminLogin(true)}
-          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-        >
-          Admin? Click here
-        </button>
-      </div>
-
       <AdminLoginModal
-        isOpen={showAdminLogin}
-        onClose={() => setShowAdminLogin(false)}
+        isOpen={showAdminLogin || showAdminFromAuth}
+        onClose={() => {
+          setShowAdminLogin(false);
+          setShowAdminFromAuth(false);
+        }}
         onSuccess={() => {
           setShowAdminLogin(false);
+          setShowAdminFromAuth(false);
           navigate('/admin', { replace: true });
+        }}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+        onAdminClick={() => {
+          setShowAuthModal(false);
+          setShowAdminFromAuth(true);
         }}
       />
     </main>
