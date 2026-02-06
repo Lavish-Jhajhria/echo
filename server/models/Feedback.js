@@ -40,6 +40,22 @@ const feedbackSchema = new Schema(
     },
     updatedAt: {
       type: Date
+    },
+    likes: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    likedBy: [
+      {
+        type: String,
+        trim: true
+      }
+    ],
+    commentCount: {
+      type: Number,
+      default: 0,
+      min: 0
     }
   },
   {

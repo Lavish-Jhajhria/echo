@@ -43,9 +43,28 @@ const MONGODB_URI =
 
 // Connect to MongoDB then start HTTP server
 connectDatabase(MONGODB_URI).then(() => {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+
+  // Handle server errors (e.g., port already in use)
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      // eslint-disable-next-line no-console
+      console.error(`\n❌ Port ${PORT} is already in use.`);
+      // eslint-disable-next-line no-console
+      console.error(`Please either:`);
+      // eslint-disable-next-line no-console
+      console.error(`  1. Stop the process using port ${PORT}`);
+      // eslint-disable-next-line no-console
+      console.error(`  2. Set a different PORT in your .env file\n`);
+      process.exit(1);
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('Server error:', err);
+      process.exit(1);
+    }
   });
 });
 

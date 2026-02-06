@@ -7,6 +7,7 @@ import { submitFeedback } from '../services/feedbackService';
 import { validateFeedbackForm } from '../utils/validation';
 
 const MESSAGE_MAX_LENGTH = 1000;
+const USER_EMAIL_KEY = 'echo_user_email';
 
 /**
  * Form for submitting feedback.
@@ -71,6 +72,13 @@ const FeedbackForm = ({ onFeedbackSubmitted }) => {
     try {
       setIsSubmitting(true);
       await submitFeedback(formData);
+
+      // Store email for "You" quick filter
+      try {
+        window.localStorage.setItem(USER_EMAIL_KEY, formData.email);
+      } catch (e) {
+        // ignore
+      }
 
       setFormData({
         name: '',

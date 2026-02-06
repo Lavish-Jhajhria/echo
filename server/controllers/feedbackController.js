@@ -5,6 +5,117 @@
 const Feedback = require('../models/Feedback');
 
 /**
+ * Toggles like on a feedback entry.
+ * @param {Object} req - Express request object (expects req.body.userIdentifier)
+ * @param {Object} res - Express response object
+ * @param {Function} next - Next middleware
+ * @description If user already liked, removes like. Otherwise adds like.
+ * @returns {Promise<void>}
+ */
+const toggleLike = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userIdentifier = req.body?.userIdentifier || req.userIdentifier;
+
+    if (!userIdentifier) {
+      return res.status(400).json({
+        success: false,
+        error: 'userIdentifier is required to toggle likes'
+      });
+    }
+
+    const feedback = await Feedback.findById(id);
+
+    if (!feedback) {
+      return res.status(404).json({
+        success: false,
+        error: 'Feedback not found'
+      });
+    }
+
+    const likedBy = Array.isArray(feedback.likedBy) ? feedback.likedBy : [];
+    const alreadyLiked = likedBy.includes(userIdentifier);
+
+    if (alreadyLiked) {
+      feedback.likedBy = likedBy.filter((identifier) => identifier !== userIdentifier);
+    } else {
+      feedback.likedBy = [...likedBy, userIdentifier];
+    }
+
+    // Keep likes count in sync with likedBy
+    feedback.likes = feedback.likedBy.length;
+
+    const updated = await feedback.save();
+
+    return res.status(200).json({
+      success: true,
+      data: updated
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Searches and filters feedback entries.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Next middleware
+ * @description Supports query params: keyword, startDate, endDate
+ * @returns {Promise<void>}
+ */
+const searchFeedbacks = async (req, res, next) => {
+  try {
+    const { keyword = '', startDate = '', endDate = '' } = req.query;
+
+    const query = {};
+
+    if (typeof keyword === 'string' && keyword.trim()) {
+      const safeKeyword = keyword.trim();
+      query.$or = [
+        { name: { $regex: safeKeyword, $options: 'i' } },
+        { email: { $regex: safeKeyword, $options: 'i' } },
+        { message: { $regex: safeKeyword, $options: 'i' } }
+      ];
+    }
+
+    const createdAt = {};
+
+    if (typeof startDate === 'string' && startDate.trim()) {
+      const start = new Date(startDate);
+      if (!Number.isNaN(start.getTime())) {
+        createdAt.$gte = start;
+      }
+    }
+
+    if (typeof endDate === 'string' && endDate.trim()) {
+      const end = new Date(endDate);
+      if (!Number.isNaN(end.getTime())) {
+        // If user provided a date-only string (YYYY-MM-DD), make it inclusive.
+        if (/^\d{4}-\d{2}-\d{2}$/.test(endDate.trim())) {
+          end.setHours(23, 59, 59, 999);
+        }
+        createdAt.$lte = end;
+      }
+    }
+
+    if (Object.keys(createdAt).length > 0) {
+      query.createdAt = createdAt;
+    }
+
+    const feedbacks = await Feedback.find(query).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: feedbacks.length,
+      data: feedbacks
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
  * Create a new feedback entry.
  * @param {Object} req - Express request
  * @param {Object} res - Express response
@@ -123,7 +234,9 @@ module.exports = {
   createFeedback,
   getAllFeedbacks,
   getFeedbackById,
-  deleteFeedback
+  deleteFeedback,
+  toggleLike,
+  searchFeedbacks
 };
 
 

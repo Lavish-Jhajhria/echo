@@ -13,22 +13,23 @@ import FeedbackItem from './FeedbackItem';
  * @param {string} props.error - Error message (if any)
  * @param {Function} props.onRetry - Reload handler
  * @param {Function} props.onFeedbackDeleted - Called when an item is deleted
+ * @param {string} [props.title] - Optional panel title
  * @returns {JSX.Element}
  */
-const FeedbackList = ({ feedbacks, isLoading, error, onRetry, onFeedbackDeleted }) => {
+const FeedbackList = ({ feedbacks, isLoading, error, onRetry, onFeedbackDeleted, title }) => {
   const hasFeedback = feedbacks && feedbacks.length > 0;
 
   return (
     <section className="echo-card p-5 sm:p-6 lg:p-7 h-full flex flex-col">
       <header className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-semibold text-white">Recent feedback</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-white">{title || 'Recent feedback'}</h2>
           <p className="text-xs text-slate-400">
             See what people are saying about Echo.
           </p>
         </div>
         <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/40 px-3 py-1 text-[11px] text-slate-300">
-          Total Feedback: <span className="ml-1 font-semibold">{feedbacks.length}</span>
+          Showing <span className="ml-1 font-semibold">{feedbacks.length}</span> results
         </span>
       </header>
 

@@ -5,7 +5,10 @@
 import React, { useEffect, useState } from 'react';
 import FeedbackForm from '../components/FeedbackForm';
 import FeedbackList from '../components/FeedbackList';
-import { getAllFeedbacks } from '../services/feedbackService';
+import FeedbackFilters from '../components/FeedbackFilters';
+import { getAllFeedbacks, searchFeedbacks } from '../services/feedbackService';
+
+const USER_EMAIL_KEY = 'echo_user_email';
 
 /**
  * Home page component.
@@ -15,6 +18,13 @@ const HomePage = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState({
+    keyword: '',
+    startDate: '',
+    endDate: '',
+    youOnly: false
+  });
+  const [userEmail, setUserEmail] = useState('');
 
   /**
    * Fetch all feedback from the API.
@@ -33,16 +43,84 @@ const HomePage = () => {
     }
   };
 
+  /**
+   * Search feedbacks using current filters.
+   * @param {Object} nextFilters
+   * @returns {Promise<void>}
+   */
+  const runSearch = async (nextFilters) => {
+    try {
+      setIsLoading(true);
+      setError('');
+
+      const hasAny =
+        Boolean(nextFilters.keyword) || Boolean(nextFilters.startDate) || Boolean(nextFilters.endDate);
+
+      if (!hasAny) {
+        await loadFeedbacks();
+        return;
+      }
+
+      const results = await searchFeedbacks({
+        keyword: nextFilters.keyword,
+        startDate: nextFilters.startDate,
+        endDate: nextFilters.endDate
+      });
+
+      setFeedbacks(results);
+    } catch (err) {
+      setError('Unable to apply filters right now. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Load feedback once on mount
     loadFeedbacks();
   }, []);
+
+  useEffect(() => {
+    // Restore user's email (used for "You" quick filter + badges)
+    try {
+      const stored = window.localStorage.getItem(USER_EMAIL_KEY) || '';
+      setUserEmail(stored);
+    } catch (e) {
+      setUserEmail('');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Debounce keyword typing so we don't spam the API.
+    const handle = window.setTimeout(() => {
+      runSearch(filters);
+    }, 300);
+
+    return () => window.clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.keyword, filters.startDate, filters.endDate]);
 
   /**
    * Refresh list after a new feedback is submitted.
    * @returns {Promise<void>}
    */
   const handleFeedbackSubmitted = async () => {
+    // Store email for "You" quick filter
+    try {
+      const stored = window.localStorage.getItem(USER_EMAIL_KEY) || '';
+      setUserEmail(stored);
+    } catch (e) {
+      // ignore
+    }
+
+    // If any filters are active, re-run search; otherwise load all.
+    const hasAny =
+      Boolean(filters.keyword) || Boolean(filters.startDate) || Boolean(filters.endDate);
+
+    if (hasAny) {
+      await runSearch(filters);
+      return;
+    }
     await loadFeedbacks();
   };
 
@@ -53,6 +131,16 @@ const HomePage = () => {
    */
   const handleFeedbackDeleted = (id) => {
     setFeedbacks((current) => current.filter((item) => item._id !== id));
+  };
+
+  /**
+   * Clear filter state and reload all feedback.
+   * @returns {Promise<void>}
+   */
+  const handleClearFilters = async () => {
+    const cleared = { keyword: '', startDate: '', endDate: '', youOnly: false };
+    setFilters(cleared);
+    await loadFeedbacks();
   };
 
   return (
@@ -73,6 +161,14 @@ const HomePage = () => {
         </p>
       </header>
 
+      <FeedbackFilters
+        filters={filters}
+        onChange={setFilters}
+        onClear={handleClearFilters}
+        resultCount={feedbacks.length}
+        userEmail={userEmail}
+      />
+
       <section className="grid gap-8 lg:gap-10 lg:grid-cols-2 items-start">
         <FeedbackForm onFeedbackSubmitted={handleFeedbackSubmitted} />
 
@@ -82,6 +178,7 @@ const HomePage = () => {
           error={error}
           onRetry={loadFeedbacks}
           onFeedbackDeleted={handleFeedbackDeleted}
+          title="Results"
         />
       </section>
     </main>
