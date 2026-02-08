@@ -8,7 +8,8 @@ const {
   getChartData,
   getFilteredFeedback,
   updateFeedbackStatus,
-  bulkDeleteFeedbacks
+  bulkDeleteFeedbacks,
+  getAuditLogs
 } = require('../controllers/adminController');
 
 const router = express.Router();
@@ -19,6 +20,7 @@ router.get('/feedbacks', getFilteredFeedback);
 router.get('/feedbacks/chart-data', getChartData);
 router.put('/feedbacks/:id/status', updateFeedbackStatus);
 router.post('/feedbacks/bulk-delete', bulkDeleteFeedbacks);
+router.get('/audit-log', getAuditLogs);
 
 module.exports = router;
 

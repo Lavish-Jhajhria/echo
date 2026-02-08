@@ -5,6 +5,7 @@
 const User = require('../models/User');
 const Feedback = require('../models/Feedback');
 const Report = require('../models/Report');
+const { createAuditLog } = require('../utils/auditLog');
 
 /**
  * Get all users with stats.
@@ -153,6 +154,16 @@ const updateUserStatus = async (req, res) => {
 
     await user.save();
 
+    const auditAction = status === 'banned' ? 'ban' : status === 'suspended' ? 'suspend' : 'approve';
+    createAuditLog({
+      admin: 'Admin',
+      action: auditAction,
+      targetType: 'user',
+      targetId: userId,
+      details: reason ? `Reason: ${reason}` : `User set to ${status}`,
+      severity: status === 'banned' ? 'high' : status === 'suspended' ? 'medium' : 'low'
+    });
+
     res.status(200).json({
       success: true,
       data: user,
@@ -235,6 +246,15 @@ const deleteUser = async (req, res) => {
       ]
     });
     await User.deleteOne({ userId });
+
+    createAuditLog({
+      admin: 'Admin',
+      action: 'delete',
+      targetType: 'user',
+      targetId: userId,
+      details: `User and associated data deleted`,
+      severity: 'high'
+    });
 
     res.status(200).json({
       success: true,

@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { Flag } from 'lucide-react';
+import { Flag, Check } from 'lucide-react';
 import axios from 'axios';
 import authService from '../services/authService';
 
@@ -18,7 +18,6 @@ export default function ReportFeedbackButton({ feedback }) {
 
   const currentUser = authService.getLoggedInUser();
 
-  // Only show for logged-in users; hide for own feedback or legacy (no userId)
   if (!currentUser || !feedback.userId || currentUser.userId === feedback.userId) {
     return null;
   }
@@ -53,7 +52,6 @@ export default function ReportFeedbackButton({ feedback }) {
         }, 2000);
       }
     } catch (err) {
-      // eslint-disable-next-line no-alert
       window.alert(err.response?.data?.error || 'Failed to submit report');
     } finally {
       setSubmitting(false);
@@ -65,11 +63,11 @@ export default function ReportFeedbackButton({ feedback }) {
       <button
         type="button"
         onClick={() => setShowModal(true)}
-        className="inline-flex items-center justify-center w-9 h-8 rounded-md border border-slate-700 bg-slate-900/40 text-slate-300 hover:bg-slate-800 hover:text-red-400 transition-colors"
+        className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-slate-600"
         title="Report this feedback"
         aria-label="Report"
       >
-        <Flag className="w-4 h-4" />
+        <Flag className="w-5 h-5" />
       </button>
 
       {showModal && (
@@ -80,60 +78,64 @@ export default function ReportFeedbackButton({ feedback }) {
             aria-hidden
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-700 overflow-hidden">
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Report feedback</h3>
+            <div className="bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-700 overflow-hidden">
+              <div className="p-8">
+                <h3 className="text-2xl font-bold text-white mb-6">Report Feedback</h3>
                 {success ? (
-                  <div className="py-6 text-center">
-                    <p className="text-emerald-400 font-medium">Report submitted successfully.</p>
+                  <div className="py-12 text-center">
+                    <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Check className="w-10 h-10 text-white" />
+                    </div>
+                    <p className="text-emerald-400 font-medium text-lg">Report submitted successfully!</p>
+                    <p className="text-slate-400 text-sm mt-2">We&apos;ll review this feedback shortly.</p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Reason
+                      <label className="block text-sm font-medium text-slate-300 mb-3">
+                        Why are you reporting this?
                       </label>
                       <select
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                        className="w-full px-4 py-3.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 text-base"
                       >
-                        <option value="spam">Spam</option>
-                        <option value="offensive">Offensive content</option>
-                        <option value="inappropriate">Inappropriate</option>
-                        <option value="harassment">Harassment</option>
+                        <option value="spam">Spam or misleading</option>
+                        <option value="offensive">Offensive language</option>
+                        <option value="inappropriate">Inappropriate content</option>
+                        <option value="harassment">Harassment or bullying</option>
                         <option value="other">Other</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Additional details (optional)
+                      <label className="block text-sm font-medium text-slate-300 mb-3">
+                        Additional Details (Optional)
                       </label>
                       <textarea
                         value={details}
                         onChange={(e) => setDetails(e.target.value)}
                         maxLength={500}
-                        rows={3}
-                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                        placeholder="Provide more context..."
+                        rows={5}
+                        className="w-full px-4 py-3.5 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none text-base"
+                        placeholder="Help us understand what's wrong with this feedback..."
                       />
-                      <p className="text-xs text-slate-400 mt-1">{details.length}/500</p>
+                      <p className="text-xs text-slate-400 mt-2">{details.length}/500 characters</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-4 pt-4">
                       <button
                         type="button"
                         onClick={() => setShowModal(false)}
                         disabled={submitting}
-                        className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50"
+                        className="flex-1 px-6 py-3.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors font-medium text-base disabled:opacity-50"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-6 py-3.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {submitting ? 'Submitting...' : 'Submit report'}
+                        {submitting ? 'Submitting...' : 'Submit Report'}
                       </button>
                     </div>
                   </form>

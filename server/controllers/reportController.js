@@ -5,6 +5,7 @@
 const Report = require('../models/Report');
 const Feedback = require('../models/Feedback');
 const User = require('../models/User');
+const { createAuditLog } = require('../utils/auditLog');
 
 /**
  * Create new report (user-facing).
@@ -170,6 +171,16 @@ const reviewReport = async (req, res) => {
         }
       );
     }
+
+    const severity = action === 'user_banned' ? 'high' : action === 'user_suspended' || action === 'content_removed' ? 'medium' : 'low';
+    createAuditLog({
+      admin: 'Admin',
+      action: 'review_report',
+      targetType: 'report',
+      targetId: reportId,
+      details: `Action: ${action}`,
+      severity
+    });
 
     res.status(200).json({
       success: true,

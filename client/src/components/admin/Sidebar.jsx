@@ -3,14 +3,15 @@
  */
 
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Users, Flag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Users, Flag, FileText } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, to: '/admin' },
   { id: 'feedback', label: 'Feedback', icon: MessageSquare, to: '/admin/feedback' },
   { id: 'users', label: 'Users', icon: Users, to: '/admin/users' },
-  { id: 'reports', label: 'Reports', icon: Flag, to: '/admin/reports' }
+  { id: 'reports', label: 'Reports', icon: Flag, to: '/admin/reports' },
+  { id: 'audit', label: 'Audit Log', icon: FileText, to: '/admin/audit' }
 ];
 
 /**

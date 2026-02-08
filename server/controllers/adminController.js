@@ -3,6 +3,7 @@
  */
 
 const Feedback = require('../models/Feedback');
+const AuditLog = require('../models/AuditLog');
 
 const VALID_STATUSES = ['normal', 'flagged', 'hidden', 'removed', 'review'];
 
@@ -249,11 +250,37 @@ const bulkDeleteFeedbacks = async (req, res, next) => {
   }
 };
 
+/**
+ * Get audit logs with optional filters.
+ * @param {Object} req - Express request (query: action, severity)
+ * @param {Object} res - Express response
+ * @param {Function} next - Next middleware
+ * @returns {Promise<void>}
+ */
+const getAuditLogs = async (req, res, next) => {
+  try {
+    const { action = '', severity = '' } = req.query;
+    const query = {};
+    if (typeof action === 'string' && action.trim()) query.action = action.trim();
+    if (typeof severity === 'string' && severity.trim()) query.severity = severity.trim();
+
+    const logs = await AuditLog.find(query).sort({ timestamp: -1 }).limit(500).lean();
+
+    return res.status(200).json({
+      success: true,
+      data: logs
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getChartData,
   getFilteredFeedback,
   updateFeedbackStatus,
-  bulkDeleteFeedbacks
+  bulkDeleteFeedbacks,
+  getAuditLogs
 };
 

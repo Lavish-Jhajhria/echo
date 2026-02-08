@@ -49,6 +49,7 @@ const FeedbackTable = ({
             <th className="px-4 py-3 text-left">Author</th>
             <th className="px-4 py-3 text-left">Message</th>
             <th className="px-4 py-3 text-left">Engagement</th>
+            <th className="px-4 py-3 text-left">Reports</th>
             <th className="px-4 py-3 text-left">Status</th>
             <th className="px-4 py-3 text-left">Created</th>
             <th className="px-4 py-3 text-right">Actions</th>
@@ -87,6 +88,18 @@ const FeedbackTable = ({
                     <span className="inline-flex items-center gap-1">
                       <MessageSquare className="w-4 h-4 text-slate-400" /> {feedback.commentCount ?? 0}
                     </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    {feedback.reportsCount > 0 ? (
+                      <>
+                        <Flag className="w-4 h-4 text-red-500" />
+                        <span className="font-medium text-red-600">{feedback.reportsCount}</span>
+                      </>
+                    ) : (
+                      <span className="text-slate-400">0</span>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -131,7 +144,7 @@ const FeedbackTable = ({
 
           {feedbacks.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+              <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
                 No feedback found.
               </td>
             </tr>

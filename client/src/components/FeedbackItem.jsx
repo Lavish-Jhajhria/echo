@@ -139,8 +139,26 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
 
   return (
     <>
-      <article className="echo-card p-4 sm:p-5 group transition-transform duration-150 hover:-translate-y-0.5">
-        <header className="flex items-start justify-between gap-3 mb-2">
+      <article className="echo-card p-4 sm:p-5 group transition-transform duration-150 hover:-translate-y-0.5 relative">
+        {/* Action buttons - top right */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          {!isOwnFeedback && (
+            <ReportFeedbackButton feedback={localFeedback} />
+          )}
+          {isOwnFeedback && (
+            <button
+              type="button"
+              onClick={handleRequestDelete}
+              disabled={isDeleting}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-error p-1"
+              aria-label="Delete feedback"
+            >
+              <span className="inline-block text-lg leading-none">&times;</span>
+            </button>
+          )}
+        </div>
+
+        <header className="flex items-start justify-between gap-3 mb-2 pr-20">
           <div>
             <p className="text-sm font-semibold text-white">{localFeedback.name}</p>
             <p className="text-xs text-slate-400">{localFeedback.email}</p>
@@ -158,17 +176,6 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
               )}
             </div>
           </div>
-          {isOwnFeedback && (
-            <button
-              type="button"
-              onClick={handleRequestDelete}
-              disabled={isDeleting}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-error p-1"
-              aria-label="Delete feedback"
-            >
-              <span className="inline-block text-lg leading-none">&times;</span>
-            </button>
-          )}
         </header>
 
         <p className="text-sm text-slate-100 mb-3 leading-relaxed">{localFeedback.message}</p>
@@ -230,8 +237,6 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
                 </svg>
               </Icon>
             </button>
-
-            <ReportFeedbackButton feedback={localFeedback} />
           </div>
 
           {error && <span className="text-error">{error}</span>}
