@@ -146,6 +146,13 @@ const login = async (req, res, next) => {
       });
     }
 
+    if (user.status === 'suspended' || user.status === 'banned') {
+      return res.status(403).json({
+        success: false,
+        error: 'Your account has been restricted. Contact support.'
+      });
+    }
+
     const isPasswordValid = await bcrypt.compare(String(password), user.password);
     if (!isPasswordValid) {
       return res.status(401).json({

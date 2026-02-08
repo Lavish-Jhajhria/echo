@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { formatDate } from '../utils/formatDate';
 import { deleteFeedback, getClientId, toggleLike } from '../services/feedbackService';
 import ModalComponent from './ModalComponent';
+import ReportFeedbackButton from './ReportFeedbackButton';
 import authService from '../services/authService';
 
 const isWithinLast7Days = (dateString) => {
@@ -235,6 +236,8 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
                 </svg>
               </Icon>
             </button>
+
+            <ReportFeedbackButton feedback={localFeedback} />
           </div>
 
           {error && <span className="text-error">{error}</span>}

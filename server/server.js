@@ -12,6 +12,8 @@ const connectDatabase = require('./config/database');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 // Load env vars from .env
@@ -32,6 +34,12 @@ app.use('/api/admin', adminRoutes);
 
 // Auth API routes
 app.use('/api/auth', authRoutes);
+
+// User management (admin)
+app.use('/api/users', userRoutes);
+
+// Reports (submit + admin)
+app.use('/api/reports', reportRoutes);
 
 // Simple health check
 app.get('/api/health', (req, res) => {

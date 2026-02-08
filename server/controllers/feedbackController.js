@@ -3,6 +3,7 @@
  */
 
 const Feedback = require('../models/Feedback');
+const User = require('../models/User');
 
 /**
  * Toggles like on a feedback entry.
@@ -155,6 +156,14 @@ const createFeedback = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         error: 'Message cannot exceed 1000 characters'
+      });
+    }
+
+    const author = await User.findOne({ userId });
+    if (author && (author.status === 'suspended' || author.status === 'banned')) {
+      return res.status(403).json({
+        success: false,
+        error: 'Your account has been restricted. You cannot submit feedback.'
       });
     }
 

@@ -93,7 +93,19 @@ const feedbackSchema = new Schema(
     adminNotes: {
       type: String,
       default: ''
-    }
+    },
+    reportsCount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    reportedBy: [
+      {
+        userId: String,
+        reportId: String,
+        createdAt: Date
+      }
+    ]
   },
   {
     // Include virtuals and hide __v in JSON

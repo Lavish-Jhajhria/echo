@@ -48,7 +48,50 @@ const userSchema = new Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  status: {
+    type: String,
+    enum: ['active', 'suspended', 'banned'],
+    default: 'active'
+  },
+  riskLevel: {
+    type: String,
+    enum: ['low', 'medium', 'high'],
+    default: 'low'
+  },
+  feedbackCount: {
+    type: Number,
+    default: 0
+  },
+  reportsReceived: {
+    type: Number,
+    default: 0
+  },
+  reportsSubmitted: {
+    type: Number,
+    default: 0
+  },
+  bannedAt: {
+    type: Date,
+    default: null
+  },
+  suspendedAt: {
+    type: Date,
+    default: null
+  },
+  suspensionReason: {
+    type: String,
+    default: ''
+  },
+  lastActive: {
+    type: Date,
+    default: Date.now
   }
+});
+
+userSchema.pre('save', function setLastActive(next) {
+  this.lastActive = new Date();
+  next();
 });
 
 /**
