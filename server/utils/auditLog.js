@@ -1,19 +1,8 @@
-/**
- * Helper to write audit log entries (non-blocking).
- */
+// Write audit logs (non-blocking)
 
 const AuditLog = require('../models/AuditLog');
 
-/**
- * Create an audit log entry. Runs in background so it doesn't block the response.
- * @param {Object} options
- * @param {string} options.admin - Admin identifier
- * @param {string} options.action - delete, ban, suspend, approve, flag, review_report, etc.
- * @param {string} options.targetType - 'user', 'feedback', 'report'
- * @param {string} options.targetId - ID of the target
- * @param {string} [options.details] - Optional description
- * @param {string} [options.severity] - low, medium, high
- */
+// Create audit log entry in background
 function createAuditLog(options) {
   const { admin = 'Admin', action, targetType, targetId, details = '', severity = 'low' } = options;
   if (!action || !targetType) return;

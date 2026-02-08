@@ -1,6 +1,4 @@
-/**
- * User management API routes (admin).
- */
+// User routes
 
 const express = require('express');
 const {

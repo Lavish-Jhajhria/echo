@@ -1,6 +1,4 @@
-/**
- * Main page showing the form + feedback list.
- */
+// Home page
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,10 +12,6 @@ import authService from '../services/authService';
 
 const USER_EMAIL_KEY = 'echo_user_email';
 
-/**
- * Home page component.
- * @returns {JSX.Element}
- */
 const HomePage = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
@@ -33,10 +27,7 @@ const HomePage = () => {
   const [userEmail, setUserEmail] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  /**
-   * Fetch all feedback from the API.
-   * @returns {Promise<void>}
-   */
+  // Load all feedbacks
   const loadFeedbacks = async () => {
     try {
       setIsLoading(true);
@@ -50,11 +41,7 @@ const HomePage = () => {
     }
   };
 
-  /**
-   * Search feedbacks using current filters.
-   * @param {Object} nextFilters
-   * @returns {Promise<void>}
-   */
+  // Search with filters
   const runSearch = async (nextFilters) => {
     try {
       setIsLoading(true);
@@ -83,12 +70,12 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    // Load feedback once on mount
+    // Load on mount
     loadFeedbacks();
   }, []);
 
   useEffect(() => {
-    // Restore logged-in user (if any); redirect admin to dashboard
+    // Load logged-in user
     const user = authService.getLoggedInUser();
     if (user) {
       setCurrentUser(user);
@@ -100,7 +87,13 @@ const HomePage = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Restore user's email (used for "You" quick filter + badges)
+    const handler = () => setShowAuthModal(true);
+    window.addEventListener('echo:openAuth', handler);
+    return () => window.removeEventListener('echo:openAuth', handler);
+  }, []);
+
+  useEffect(() => {
+    // Restore user email
     try {
       const stored = window.localStorage.getItem(USER_EMAIL_KEY) || '';
       if (!currentUser?.email) setUserEmail(stored);
@@ -110,7 +103,7 @@ const HomePage = () => {
   }, [currentUser?.email]);
 
   useEffect(() => {
-    // Debounce keyword typing so we don't spam the API.
+    // Debounce search
     const handle = window.setTimeout(() => {
       runSearch(filters);
     }, 300);
@@ -119,12 +112,9 @@ const HomePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.keyword, filters.startDate, filters.endDate]);
 
-  /**
-   * Refresh list after a new feedback is submitted.
-   * @returns {Promise<void>}
-   */
+  // Refresh after new feedback
   const handleFeedbackSubmitted = async () => {
-    // Keep "You" filter synced to current user
+    // Keep "You" filter synced
     if (currentUser?.email) setUserEmail(currentUser.email);
 
     // If any filters are active, re-run search; otherwise load all.
@@ -138,19 +128,12 @@ const HomePage = () => {
     await loadFeedbacks();
   };
 
-  /**
-   * Remove deleted feedback from local state.
-   * @param {string} id - Feedback id
-   * @returns {void}
-   */
+  // Remove deleted feedback
   const handleFeedbackDeleted = (id) => {
     setFeedbacks((current) => current.filter((item) => item._id !== id));
   };
 
-  /**
-   * Clear filter state and reload all feedback.
-   * @returns {Promise<void>}
-   */
+  // Clear filters
   const handleClearFilters = async () => {
     const cleared = { keyword: '', startDate: '', endDate: '', youOnly: false };
     setFilters(cleared);

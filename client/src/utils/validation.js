@@ -1,30 +1,17 @@
-/**
- * Basic validation helpers for the feedback form.
- */
+// Form validation helpers
 
-/**
- * Check if email looks valid.
- * @param {string} email - Email to validate
- * @returns {boolean}
- */
+// Check email format
 export const isValidEmail = (email) => {
   if (!email) {
     return false;
   }
 
-  // Simple pattern is enough for client-side checks
+  // Basic regex check
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailPattern.test(email.trim());
 };
 
-/**
- * Validate feedback form values.
- * @param {Object} formData - Form values
- * @param {string} formData.name - Name
- * @param {string} formData.email - Email
- * @param {string} formData.message - Message
- * @returns {Object} { isValid, errors }
- */
+// Validate feedback form
 export const validateFeedbackForm = (formData) => {
   const errors = {};
 

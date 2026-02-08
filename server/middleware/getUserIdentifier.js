@@ -1,10 +1,5 @@
-/**
- * Extracts user identifier from request.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Next middleware function
- * @description Uses IP address as simple identifier for now.
- */
+// Extract user identifier from request
+
 const getUserIdentifier = (req, res, next) => {
   const forwardedFor = req.headers['x-forwarded-for'];
   const ipFromHeader =

@@ -1,17 +1,8 @@
-/**
- * Authentication controller (register/login).
- */
+// Auth: register/login
 
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-/**
- * Register new user.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
 const register = async (req, res, next) => {
   try {
     const { firstName, lastName = '', email, password } = req.body || {};
@@ -186,13 +177,7 @@ const login = async (req, res, next) => {
   }
 };
 
-/**
- * Get current user info by email.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Get current user by email
 const getCurrentUser = async (req, res, next) => {
   try {
     const { email } = req.query || {};

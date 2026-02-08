@@ -1,6 +1,4 @@
-/**
- * Top-level app shell for Echo.
- */
+// Main app shell
 
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -8,10 +6,6 @@ import HomePage from './pages/HomePage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 
-/**
- * Render the main layout.
- * @returns {JSX.Element}
- */
 const App = () => {
   return (
     <BrowserRouter>

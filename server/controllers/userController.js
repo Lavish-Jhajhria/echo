@@ -1,17 +1,11 @@
-/**
- * User management controller (admin).
- */
+// User management
 
 const User = require('../models/User');
 const Feedback = require('../models/Feedback');
 const Report = require('../models/Report');
 const { createAuditLog } = require('../utils/auditLog');
 
-/**
- * Get all users with stats.
- * @param {Object} req
- * @param {Object} res
- */
+// Get all users + stats
 const getAllUsers = async (req, res) => {
   try {
     const { status, riskLevel, search } = req.query;
@@ -75,11 +69,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-/**
- * Get single user details with feedbacks and reports.
- * @param {Object} req
- * @param {Object} res
- */
+// Get single user + history
 const getUserDetails = async (req, res) => {
   try {
     const { userId } = req.params;

@@ -1,17 +1,11 @@
-/**
- * Report controller (create report, list, review).
- */
+// Report controller
 
 const Report = require('../models/Report');
 const Feedback = require('../models/Feedback');
 const User = require('../models/User');
 const { createAuditLog } = require('../utils/auditLog');
 
-/**
- * Create new report (user-facing).
- * @param {Object} req
- * @param {Object} res
- */
+// Submit new report
 const createReport = async (req, res) => {
   try {
     const { feedbackId, reportedBy, feedbackAuthor, reason, details } = req.body;
@@ -96,11 +90,7 @@ const createReport = async (req, res) => {
   }
 };
 
-/**
- * Get all reports (admin).
- * @param {Object} req
- * @param {Object} res
- */
+// Get all reports
 const getAllReports = async (req, res) => {
   try {
     const { status } = req.query;
@@ -123,11 +113,7 @@ const getAllReports = async (req, res) => {
   }
 };
 
-/**
- * Review report and take action (admin).
- * @param {Object} req
- * @param {Object} res
- */
+// Review and action report
 const reviewReport = async (req, res) => {
   try {
     const { reportId } = req.params;

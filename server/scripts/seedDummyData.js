@@ -1,7 +1,4 @@
-/**
- * Seed script: creates realistic dummy users, feedbacks, and reports for testing.
- * Run from server directory: npm run seed
- */
+// Seed script for test data
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');

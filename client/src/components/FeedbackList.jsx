@@ -1,21 +1,8 @@
-/**
- * List of feedback cards with loading/empty states.
- */
+// Feedback list with loading/error states
 
 import React from 'react';
 import FeedbackItem from './FeedbackItem';
 
-/**
- * Render feedback list panel.
- * @param {Object} props - Component props
- * @param {Array} props.feedbacks - Feedback items
- * @param {boolean} props.isLoading - Loading flag
- * @param {string} props.error - Error message (if any)
- * @param {Function} props.onRetry - Reload handler
- * @param {Function} props.onFeedbackDeleted - Called when an item is deleted
- * @param {string} [props.title] - Optional panel title
- * @returns {JSX.Element}
- */
 const FeedbackList = ({ feedbacks, isLoading, error, onRetry, onFeedbackDeleted, title }) => {
   const hasFeedback = feedbacks && feedbacks.length > 0;
 

@@ -1,20 +1,10 @@
-/**
- * Authentication modal with login/signup tabs.
- */
+// Auth modal (login/signup)
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User as UserIcon, X } from 'lucide-react';
 import authService from '../services/authService';
 
-/**
- * AuthModal (login/signup; admin logs in with special email → redirects to /admin).
- * @param {Object} props
- * @param {boolean} props.isOpen
- * @param {Function} props.onClose
- * @param {Function} props.onSuccess
- * @returns {JSX.Element|null}
- */
 const AuthModal = ({ isOpen, onClose, onSuccess }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');

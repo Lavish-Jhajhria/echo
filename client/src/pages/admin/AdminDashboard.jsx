@@ -1,6 +1,4 @@
-/**
- * Admin dashboard container + routing.
- */
+// Admin dashboard
 
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
@@ -12,10 +10,6 @@ import ReportsPage from './ReportsPage';
 import AuditLogPage from './AuditLogPage';
 import authService from '../../services/authService';
 
-/**
- * AdminDashboard.
- * @returns {JSX.Element}
- */
 const AdminDashboard = () => {
   const [globalSearch, setGlobalSearch] = useState('');
   const navigate = useNavigate();

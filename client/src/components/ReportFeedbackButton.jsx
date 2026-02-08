@@ -1,13 +1,12 @@
-/**
- * Report feedback button and modal (user-facing).
- * Uses React Portal to render modal outside DOM hierarchy to avoid clipping issues.
- */
+// Report modal (React Portal)
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Flag, Check, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import authService from '../services/authService';
+import ModalComponent from './ModalComponent';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -19,10 +18,14 @@ export default function ReportFeedbackButton({ feedback }) {
   const [success, setSuccess] = useState(false);
 
   const currentUser = authService.getLoggedInUser();
+  const navigate = useNavigate();
 
-  if (!currentUser || !feedback.userId || currentUser.userId === feedback.userId) {
+  // Hide only when logged in and reporting own feedback
+  if (currentUser && feedback.userId && currentUser.userId === feedback.userId) {
     return null;
   }
+
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,7 +75,10 @@ export default function ReportFeedbackButton({ feedback }) {
     <>
       <button
         type="button"
-        onClick={() => setShowModal(true)}
+        onClick={() => {
+          if (!currentUser) return setShowLoginAlert(true);
+          return setShowModal(true);
+        }}
         className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/30"
         title="Report this feedback"
         aria-label="Report"
@@ -80,16 +86,26 @@ export default function ReportFeedbackButton({ feedback }) {
         <Flag className="w-5 h-5" />
       </button>
 
+      <ModalComponent
+        isOpen={showLoginAlert}
+        title="Login Required"
+        message="You must sign in first to report feedback."
+        onCancel={() => setShowLoginAlert(false)}
+        onConfirm={() => {
+          setShowLoginAlert(false);
+          navigate('/');
+          window.setTimeout(() => window.dispatchEvent(new CustomEvent('echo:openAuth')), 50);
+        }}
+      />
+
       {showModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          {/* Backdrop with animation */}
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
             onClick={() => !submitting && setShowModal(false)}
             aria-hidden="true"
           />
           
-          {/* Modal container with animation */}
           <div className="relative bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-700/50 overflow-hidden animate-modal-in">
             <div className="p-8">
               {success ? (
@@ -104,7 +120,6 @@ export default function ReportFeedbackButton({ feedback }) {
                 </div>
               ) : (
                 <>
-                  {/* Header with icon */}
                   <div className="flex flex-col items-center mb-8 text-center">
                     <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20 shadow-lg shadow-red-500/10">
                       <AlertCircle className="w-8 h-8 text-red-500" />
@@ -116,7 +131,6 @@ export default function ReportFeedbackButton({ feedback }) {
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Reason dropdown */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-200 mb-3">
                         Why are you reporting this?
@@ -134,7 +148,6 @@ export default function ReportFeedbackButton({ feedback }) {
                       </select>
                     </div>
 
-                    {/* Details textarea */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-200 mb-3">
                         Additional Details <span className="text-slate-400 font-normal">(optional)</span>

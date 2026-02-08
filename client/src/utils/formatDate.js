@@ -1,12 +1,5 @@
-/**
- * Small helpers for formatting dates.
- */
+// Date formatter
 
-/**
- * Format a date into something like "Feb 1, 2026, 10:30 AM".
- * @param {string|number|Date} value - Date-ish value
- * @returns {string}
- */
 export const formatDate = (value) => {
   if (!value) {
     return '';
@@ -24,7 +17,6 @@ export const formatDate = (value) => {
       hour12: true
     });
   } catch (error) {
-    // If value is weird, just bail out with empty string
     return '';
   }
 };

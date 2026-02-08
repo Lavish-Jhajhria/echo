@@ -1,14 +1,9 @@
-/**
- * Feedback model (name, email, message, timestamps).
- */
+// Feedback schema
 
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
-/**
- * Shape of a feedback document.
- */
 const feedbackSchema = new Schema(
   {
     userId: {
@@ -108,7 +103,6 @@ const feedbackSchema = new Schema(
     ]
   },
   {
-    // Include virtuals and hide __v in JSON
     toJSON: {
       virtuals: true,
       versionKey: false
@@ -116,12 +110,9 @@ const feedbackSchema = new Schema(
   }
 );
 
-/**
- * Keep updatedAt in sync before save.
- */
+// Update timestamp before save
 feedbackSchema.pre('save', function handlePreSave(next) {
   this.updatedAt = new Date();
-  // Ensure legacy fields are populated from auth fields when present.
   if (this.userName && !this.name) {
     this.name = this.userName;
   }

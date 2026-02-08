@@ -1,8 +1,7 @@
-/**
- * Single feedback card with delete option.
- */
+// Single feedback card
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../utils/formatDate';
 import { deleteFeedback, getClientId, toggleLike } from '../services/feedbackService';
 import ModalComponent from './ModalComponent';
@@ -21,13 +20,6 @@ const Icon = ({ children }) => (
   <span className="inline-flex items-center justify-center w-5 h-5">{children}</span>
 );
 
-/**
- * Render one feedback item.
- * @param {Object} props - Component props
- * @param {Object} props.feedback - Feedback data
- * @param {Function} props.onDeleted - Called after delete
- * @returns {JSX.Element}
- */
 const FeedbackItem = ({ feedback, onDeleted }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -44,32 +36,22 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
   const showLastWeek = isWithinLast7Days(localFeedback.createdAt);
 
   const currentUser = authService.getLoggedInUser();
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
+  const navigate = useNavigate();
   const showYou = Boolean(currentUser?.userId)
     ? localFeedback.userId === currentUser.userId
     : false;
   const isOwnFeedback = Boolean(currentUser?.userId && localFeedback.userId && localFeedback.userId === currentUser.userId);
 
-  /**
-   * Open confirm modal when user wants to delete.
-   * @returns {void}
-   */
   const handleRequestDelete = () => {
     setError('');
     setShowModal(true);
   };
 
-  /**
-   * Close modal without deleting.
-   * @returns {void}
-   */
   const handleCancelDelete = () => {
     setShowModal(false);
   };
 
-  /**
-   * Delete feedback after user confirms (only for own feedback).
-   * @returns {Promise<void>}
-   */
   const handleConfirmDelete = async () => {
     if (!currentUser) {
       setError('You must be logged in to delete feedback');
@@ -91,17 +73,16 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
     }
   };
 
-  /**
-   * Toggle like for this feedback.
-   * @returns {Promise<void>}
-   */
   const handleToggleLike = async () => {
     if (isLiking) return;
+    if (!currentUser) {
+      setShowLoginAlert(true);
+      return;
+    }
     try {
       setIsLiking(true);
       setError('');
 
-      // Optimistic update
       setLocalFeedback((prev) => {
         const prevLikedBy = Array.isArray(prev.likedBy) ? prev.likedBy : [];
         const alreadyLiked = prevLikedBy.includes(clientId);
@@ -119,7 +100,6 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
       setLocalFeedback(updated);
     } catch (err) {
       setError('Unable to update like. Please try again.');
-      // best-effort: refetch is overkill; revert by toggling again locally
       setLocalFeedback((prev) => {
         const prevLikedBy = Array.isArray(prev.likedBy) ? prev.likedBy : [];
         const alreadyLiked = prevLikedBy.includes(clientId);
@@ -136,6 +116,7 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
       setIsLiking(false);
     }
   };
+
 
   return (
     <>
@@ -249,6 +230,17 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
         message="Are you sure you want to delete this feedback?"
         onCancel={handleCancelDelete}
         onConfirm={handleConfirmDelete}
+      />
+      <ModalComponent
+        isOpen={showLoginAlert}
+        title="Login Required"
+        message="You must sign in first to like feedback."
+        onCancel={() => setShowLoginAlert(false)}
+        onConfirm={() => {
+          setShowLoginAlert(false);
+          navigate('/');
+          window.setTimeout(() => window.dispatchEvent(new CustomEvent('echo:openAuth')), 50);
+        }}
       />
     </>
   );

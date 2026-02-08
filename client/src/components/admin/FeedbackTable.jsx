@@ -1,6 +1,4 @@
-/**
- * Feedback management table with selection + actions.
- */
+// Feedback table with selection
 
 import React from 'react';
 import { Eye, MessageSquare, ThumbsUp, Trash2, Flag } from 'lucide-react';
@@ -14,17 +12,6 @@ const statusColors = {
   review: 'bg-blue-100 text-blue-700'
 };
 
-/**
- * @param {Object} props
- * @param {Array} props.feedbacks
- * @param {Array<string>} props.selectedIds
- * @param {Function} props.onToggleSelect
- * @param {Function} props.onToggleSelectAll
- * @param {Function} [props.onView] - Optional
- * @param {Function} props.onDelete
- * @param {Function} props.onStatusChange
- * @returns {JSX.Element}
- */
 const FeedbackTable = ({
   feedbacks,
   selectedIds,

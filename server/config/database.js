@@ -1,17 +1,9 @@
-/**
- * Tiny helper to connect Mongoose to MongoDB.
- */
+// Connect to MongoDB
 
 const mongoose = require('mongoose');
 
-/**
- * Connect to MongoDB.
- * @param {string} mongoUri - Mongo connection string
- * @returns {Promise<void>}
- */
 const connectDatabase = async (mongoUri) => {
   try {
-    // Basic Mongoose options
     const conn = await mongoose.connect(mongoUri, {
       autoIndex: true
     });
@@ -26,7 +18,7 @@ const connectDatabase = async (mongoUri) => {
       // eslint-disable-next-line no-console
       console.log(`📊 Collections: ${collections.map((c) => c.name).join(', ') || '(none yet)'}`);
     } catch (e) {
-      // ignore collection listing errors
+      // silently fail
     }
   } catch (error) {
     // eslint-disable-next-line no-console

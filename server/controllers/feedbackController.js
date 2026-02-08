@@ -1,18 +1,9 @@
-/**
- * Handlers for feedback CRUD.
- */
+// Feedback CRUD
 
 const Feedback = require('../models/Feedback');
 const User = require('../models/User');
 
-/**
- * Toggles like on a feedback entry.
- * @param {Object} req - Express request object (expects req.body.userIdentifier)
- * @param {Object} res - Express response object
- * @param {Function} next - Next middleware
- * @description If user already liked, removes like. Otherwise adds like.
- * @returns {Promise<void>}
- */
+// Toggle like
 const toggleLike = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -43,7 +34,6 @@ const toggleLike = async (req, res, next) => {
       feedback.likedBy = [...likedBy, userIdentifier];
     }
 
-    // Keep likes count in sync with likedBy
     feedback.likes = feedback.likedBy.length;
 
     const updated = await feedback.save();
@@ -57,14 +47,7 @@ const toggleLike = async (req, res, next) => {
   }
 };
 
-/**
- * Searches and filters feedback entries.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Next middleware
- * @description Supports query params: keyword, startDate, endDate
- * @returns {Promise<void>}
- */
+// Search feedbacks
 const searchFeedbacks = async (req, res, next) => {
   try {
     const { keyword = '', startDate = '', endDate = '' } = req.query;
@@ -92,7 +75,6 @@ const searchFeedbacks = async (req, res, next) => {
     if (typeof endDate === 'string' && endDate.trim()) {
       const end = new Date(endDate);
       if (!Number.isNaN(end.getTime())) {
-        // If user provided a date-only string (YYYY-MM-DD), make it inclusive.
         if (/^\d{4}-\d{2}-\d{2}$/.test(endDate.trim())) {
           end.setHours(23, 59, 59, 999);
         }
@@ -116,18 +98,10 @@ const searchFeedbacks = async (req, res, next) => {
   }
 };
 
-/**
- * Create a new feedback entry.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Create feedback
 const createFeedback = async (req, res, next) => {
   try {
     const { userId, userName, userEmail, message } = req.body;
-
-    // Quick required-field check before hitting Mongoose
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -171,7 +145,6 @@ const createFeedback = async (req, res, next) => {
       userId,
       userName,
       userEmail,
-      // Backward compatible fields
       name: userName,
       email: userEmail,
       message: String(message).trim(),
@@ -198,13 +171,7 @@ const createFeedback = async (req, res, next) => {
   }
 };
 
-/**
- * Get all feedback entries (newest first).
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Get all feedbacks
 const getAllFeedbacks = async (req, res, next) => {
   try {
     const feedbacks = await Feedback.find().sort({ createdAt: -1 });
@@ -219,13 +186,7 @@ const getAllFeedbacks = async (req, res, next) => {
   }
 };
 
-/**
- * Get a single feedback entry by id.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Get feedback by ID
 const getFeedbackById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -247,13 +208,7 @@ const getFeedbackById = async (req, res, next) => {
   }
 };
 
-/**
- * Delete a feedback entry by id (only by author).
- * @param {Object} req - Express request (req.body.userId required)
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Delete feedback
 const deleteFeedback = async (req, res, next) => {
   try {
     const { id } = req.params;

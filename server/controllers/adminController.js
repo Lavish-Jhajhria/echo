@@ -1,9 +1,8 @@
-/**
- * Admin handlers for managing feedback + dashboard stats.
- */
+// Admin: feedback + stats
 
 const Feedback = require('../models/Feedback');
 const AuditLog = require('../models/AuditLog');
+const Report = require('../models/Report');
 
 const VALID_STATUSES = ['normal', 'flagged', 'hidden', 'removed', 'review'];
 
@@ -19,13 +18,21 @@ const endOfDay = (date) => {
   return d;
 };
 
-/**
- * Get admin dashboard stats.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Relative timestamps (e.g., "2m ago")
+const formatTimeAgo = (date) => {
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
+
+// Dashboard stats with charts
 const getDashboardStats = async (req, res, next) => {
   try {
     const now = new Date();
@@ -50,15 +57,125 @@ const getDashboardStats = async (req, res, next) => {
     const feedbackGrowth =
       prevWeekCount === 0 ? (thisWeekCount > 0 ? 100 : 0) : Math.round(((thisWeekCount - prevWeekCount) / prevWeekCount) * 100);
 
+    const [pendingReports, flaggedFeedbacks] = await Promise.all([
+      Report.countDocuments({ status: 'pending' }),
+      Feedback.countDocuments({ status: 'flagged' })
+    ]);
+
+    // 7-day charts
+    const activityChartData = [];
+    const engagementChartData = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      const dayStart = startOfDay(date);
+      const dayEnd = endOfDay(date);
+      
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const uniqueUsers = await Feedback.distinct('email', { 
+        createdAt: { $gte: dayStart, $lte: dayEnd } 
+      }).then(emails => emails.length);
+      
+      const newFeedbacks = await Feedback.countDocuments({
+        createdAt: { $gte: dayStart, $lte: dayEnd }
+      });
+      
+      activityChartData.push({
+        date: dateStr,
+        activeUsers: uniqueUsers,
+        newFeedbacks: newFeedbacks
+      });
+      
+      // Engagement: sum likes and comments
+      const engagement = await Feedback.aggregate([
+        {
+          $match: { createdAt: { $gte: dayStart, $lte: dayEnd } }
+        },
+        {
+          $group: {
+            _id: null,
+            totalLikes: { $sum: { $ifNull: ['$likes', 0] } },
+            totalComments: { $sum: { $ifNull: ['$commentCount', 0] } }
+          }
+        }
+      ]);
+      
+      const likes = engagement[0]?.totalLikes || 0;
+      const comments = engagement[0]?.totalComments || 0;
+      
+      engagementChartData.push({
+        date: dateStr,
+        likes,
+        comments
+      });
+    }
+
+    // 7-day feedback volume
+    // aggregate by day
+    const fvStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6));
+    const fvEnd = endOfDay(now);
+
+    const fvBuckets = await Feedback.aggregate([
+      { $match: { createdAt: { $gte: fvStart, $lte: fvEnd } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    const fvByDate = new Map(fvBuckets.map((b) => [b._id, b.count]));
+
+    const feedbackVolume = [];
+    for (let i = 0; i < 7; i += 1) {
+      const d = new Date(fvStart);
+      d.setDate(fvStart.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      feedbackVolume.push({ date: label, count: fvByDate.get(key) || 0 });
+    }
+
+    // Recent Activity (last 5 audit logs)
+    const auditLogs = await AuditLog.find({})
+      .sort({ timestamp: -1 })
+      .limit(5)
+      .lean();
+    
+    const recentActivity = auditLogs.map(log => ({
+      id: log._id,
+      admin: log.admin || 'System',
+      action: log.action,
+      targetType: log.targetType,
+      targetId: log.targetId,
+      details: log.details,
+      severity: log.severity,
+      time: formatTimeAgo(new Date(log.timestamp))
+    }));
+
     return res.status(200).json({
       success: true,
       data: {
-        totalFeedback,
-        totalUniqueUsers,
-        activeUsersThisWeek,
-        thisWeekCount,
-        flaggedCount,
-        feedbackGrowth
+        counts: {
+          totalFeedback,
+          totalUniqueUsers,
+          activeUsersThisWeek,
+          thisWeekCount,
+          flaggedCount,
+          feedbackGrowth
+        },
+        moderationQueue: {
+          pending: pendingReports,
+          flagged: flaggedFeedbacks
+        },
+        charts: {
+          activity: activityChartData,
+          engagement: engagementChartData
+        },
+        feedbackVolume,
+        recentActivity
       }
     });
   } catch (error) {
@@ -66,13 +183,7 @@ const getDashboardStats = async (req, res, next) => {
   }
 };
 
-/**
- * Get chart data for feedback volume over last 7 days.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Get 7-day chart data
 const getChartData = async (req, res, next) => {
   try {
     const now = new Date();
@@ -109,13 +220,7 @@ const getChartData = async (req, res, next) => {
   }
 };
 
-/**
- * Get feedback with filters + pagination.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Get filtered feedbacks (pagination)
 const getFilteredFeedback = async (req, res, next) => {
   try {
     const {
@@ -178,13 +283,7 @@ const getFilteredFeedback = async (req, res, next) => {
   }
 };
 
-/**
- * Update feedback status.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Update feedback status
 const updateFeedbackStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -221,13 +320,7 @@ const updateFeedbackStatus = async (req, res, next) => {
   }
 };
 
-/**
- * Bulk delete feedbacks.
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Bulk delete feedbacks
 const bulkDeleteFeedbacks = async (req, res, next) => {
   try {
     const { ids } = req.body || {};
@@ -250,13 +343,7 @@ const bulkDeleteFeedbacks = async (req, res, next) => {
   }
 };
 
-/**
- * Get audit logs with optional filters.
- * @param {Object} req - Express request (query: action, severity)
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- * @returns {Promise<void>}
- */
+// Get audit logs
 const getAuditLogs = async (req, res, next) => {
   try {
     const { action = '', severity = '' } = req.query;

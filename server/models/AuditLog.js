@@ -1,6 +1,4 @@
-/**
- * Audit log model for admin actions.
- */
+// Audit log schema
 
 const mongoose = require('mongoose');
 

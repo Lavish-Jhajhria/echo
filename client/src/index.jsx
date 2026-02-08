@@ -1,16 +1,10 @@
-/**
- * Application entry point for Echo Feedback Collector.
- */
+// App entry point
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 
-/**
- * Renders the root React application.
- * @returns {void}
- */
 const renderApp = () => {
   const rootElement = document.getElementById('root');
 

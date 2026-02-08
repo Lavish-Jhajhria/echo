@@ -1,6 +1,4 @@
-/**
- * Auth API routes.
- */
+// Auth routes
 
 const express = require('express');
 const { register, login, getCurrentUser } = require('../controllers/authController');

@@ -1,6 +1,4 @@
-/**
- * Report API routes (user submit + admin list/review).
- */
+// Report routes
 
 const express = require('express');
 const {

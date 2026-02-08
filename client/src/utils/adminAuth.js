@@ -1,11 +1,4 @@
-/**
- * Admin auth helpers (simple password-based client auth).
- *
- * NOTE: Spec requires localStorage key `isAdminAuthenticated`,
- * but also wants the session to expire on browser close.
- * We use sessionStorage as the "session flag" and treat localStorage
- * as a mirror that is cleared when the session is missing.
- */
+// Admin auth (localStorage + sessionStorage)
 
 const AUTH_KEY = 'isAdminAuthenticated';
 const SESSION_KEY = 'echo_admin_session';

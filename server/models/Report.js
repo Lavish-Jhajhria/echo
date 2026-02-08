@@ -1,6 +1,4 @@
-/**
- * Report model for feedback reports.
- */
+// Report schema
 
 const mongoose = require('mongoose');
 

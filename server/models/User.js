@@ -1,6 +1,4 @@
-/**
- * User model for Echo authentication.
- */
+// User schema
 
 const mongoose = require('mongoose');
 
@@ -94,28 +92,22 @@ userSchema.pre('save', function setLastActive(next) {
   next();
 });
 
-/**
- * Generate a unique user id (U-XXXX).
- * @returns {Promise<string>}
- */
+// Generate unique user ID
 const generateUniqueUserId = async () => {
-  // Try a handful of times to avoid rare collisions.
+// Try a few times to avoid collisions
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const candidate = `U-${randomNum}`;
-    // eslint-disable-next-line no-await-in-loop
     const existing = await mongoose.model('User').findOne({ userId: candidate }).lean();
     if (!existing) return candidate;
   }
 
-  // Fallback: widen the space if we somehow collide too often.
+  // Fallback for rare collisions
   const randomNum = Math.floor(100000 + Math.random() * 900000);
   return `U-${randomNum}`;
 };
 
-/**
- * Generate userId before saving.
- */
+// Generate userId before validate
 userSchema.pre('validate', async function handlePreValidate(next) {
   try {
     if (this.isNew && !this.userId) {
