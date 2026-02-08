@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Eye, MessageSquare, ThumbsUp, Trash2 } from 'lucide-react';
+import { Eye, MessageSquare, ThumbsUp, Trash2, Flag } from 'lucide-react';
 import { formatDate } from '../../utils/formatDate';
 
 const statusColors = {
@@ -106,7 +106,7 @@ const FeedbackTable = ({
                   <div className="flex items-center gap-2">
                     {feedback.reportsCount > 0 ? (
                       <>
-                        <ThumbsUp className="w-4 h-4 text-red-500" />
+                        <Flag className="w-4 h-4 text-red-500" />
                         <span className="font-medium text-red-600">{feedback.reportsCount}</span>
                       </>
                     ) : (
