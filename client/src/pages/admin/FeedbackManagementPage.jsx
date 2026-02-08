@@ -1,295 +1,202 @@
-/**
- * Feedback management page (filters + bulk actions + table).
- */
-
-import React, { useEffect, useMemo, useState } from 'react';
-import { Flag, Trash2 } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Flag, Trash2, Search, Filter, RefreshCw } from 'lucide-react';
 import FeedbackTable from '../../components/admin/FeedbackTable';
 import { bulkDeleteFeedbacks, getFilteredFeedbacks, updateFeedbackStatus } from '../../services/adminService';
 
 const statusOptions = ['all', 'normal', 'flagged', 'hidden', 'removed', 'review'];
 
-/**
- * @param {Object} props
- * @param {string} props.globalSearch
- * @returns {JSX.Element}
- */
 const FeedbackManagementPage = ({ globalSearch }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(20);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Combine local search with global header search
   const effectiveSearch = useMemo(() => (searchQuery || globalSearch || '').trim(), [searchQuery, globalSearch]);
 
-  const load = async (opts = {}) => {
+  const loadFeedbacks = async () => {
     try {
       setLoading(true);
       setError('');
-      const skip = (opts.page ?? page) * (opts.limit ?? limit);
+      
+      const skip = page * limit;
       const result = await getFilteredFeedbacks({
         status: statusFilter,
         keyword: effectiveSearch,
-        startDate,
-        endDate,
-        limit: opts.limit ?? limit,
+        limit,
         skip
       });
-      setFeedbacks(result.data);
-      setTotal(result.total || 0);
-    } catch (e) {
-      setError('Unable to load feedback. Please try again.');
+
+      if (result && result.data) {
+        setFeedbacks(result.data);
+        setTotal(result.total || 0);
+      } else {
+        setFeedbacks([]);
+        setTotal(0);
+      }
+    } catch (err) {
+      console.error('Error loading feedbacks:', err);
+      setError('Failed to connect to the database. Please check your internet connection or server status.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial load and filter changes
   useEffect(() => {
-    // Reset to first page when filters change
     setPage(0);
-    setSelectedIds([]);
-    const t = window.setTimeout(() => load({ page: 0 }), 250);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, effectiveSearch, startDate, endDate, limit]);
+    const debounceTimer = setTimeout(() => {
+      loadFeedbacks();
+    }, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [statusFilter, effectiveSearch, limit]);
 
-  const onToggleSelect = (id) => {
-    setSelectedIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
-  };
+  // Pagination change
+  useEffect(() => {
+    loadFeedbacks();
+  }, [page]);
 
-  const onToggleSelectAll = (ids) => {
-    setSelectedIds((cur) => (cur.length === ids.length ? [] : ids));
-  };
-
-  const handleBulkDelete = async (ids) => {
-    if (!ids || ids.length === 0) return;
-    // simple confirm
-    // eslint-disable-next-line no-alert
-    const ok = window.confirm(`Delete ${ids.length} feedback item(s)? This cannot be undone.`);
-    if (!ok) return;
-    try {
-      setLoading(true);
-      setError('');
-      await bulkDeleteFeedbacks(ids);
-      setSelectedIds([]);
-      await load();
-    } catch (e) {
-      setError('Bulk delete failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBulkStatus = async (status) => {
+  const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.length} feedback item(s)? This cannot be undone.`)) return;
+
     try {
       setLoading(true);
-      setError('');
-      await Promise.all(selectedIds.map((id) => updateFeedbackStatus(id, status)));
+      await bulkDeleteFeedbacks(selectedIds);
       setSelectedIds([]);
-      await load();
+      await loadFeedbacks();
     } catch (e) {
-      setError('Bulk status update failed. Please try again.');
+      alert('Failed to delete feedbacks');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (id, status) => {
+  const handleStatusChange = async (id, newStatus) => {
     try {
-      setError('');
-      const updated = await updateFeedbackStatus(id, status);
-      setFeedbacks((cur) => cur.map((f) => (f._id === id ? updated : f)));
+      // Optimistic update
+      setFeedbacks(prev => prev.map(f => f._id === id ? { ...f, status: newStatus } : f));
+      await updateFeedbackStatus(id, newStatus);
     } catch (e) {
-      setError('Unable to update status. Please try again.');
+      await loadFeedbacks(); // Revert on error
+      alert('Failed to update status');
     }
   };
 
-  const totalPages = Math.max(Math.ceil(total / limit), 1);
-
-  const gotoPage = async (nextPage) => {
-    const clamped = Math.max(0, Math.min(nextPage, totalPages - 1));
-    setPage(clamped);
-    await load({ page: clamped });
-  };
+  const totalPages = Math.ceil(total / limit) || 1;
 
   return (
-    <div className="p-6 sm:p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Feedback Management</h1>
-        <p className="text-sm text-slate-600">Filter, review, and moderate feedback.</p>
+    <div className="p-6 max-w-[1600px] mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Feedback Management</h1>
+          <p className="text-slate-500">Manage user feedback, reports, and moderation</p>
+        </div>
+        <button 
+          onClick={loadFeedbacks}
+          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          title="Refresh"
+        >
+          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, email, or message..."
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          
+          <div className="w-48">
+            <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {statusOptions.map(option => (
+                <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Error Message */}
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100 flex items-center gap-2">
+          <div className="w-2 h-2 bg-red-600 rounded-full" />
           {error}
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4">
-        <div className="flex flex-col lg:flex-row gap-3 lg:items-end">
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-slate-600 mb-1">Search</label>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search name, email, or message…"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            {globalSearch && !searchQuery && (
-              <p className="mt-1 text-[11px] text-slate-500">
-                Using header search: <span className="font-medium">{globalSearch}</span>
-              </p>
-            )}
-          </div>
-
-          <div className="w-full lg:w-48">
-            <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              {statusOptions.map((s) => (
-                <option key={s} value={s}>
-                  {s === 'all' ? 'All status' : s}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="w-full lg:w-44">
-            <label className="block text-xs font-medium text-slate-600 mb-1">Start date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="w-full lg:w-44">
-            <label className="block text-xs font-medium text-slate-600 mb-1">End date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="w-full lg:w-36">
-            <label className="block text-xs font-medium text-slate-600 mb-1">Page size</label>
-            <select
-              value={limit}
-              onChange={(e) => setLimit(parseInt(e.target.value, 10))}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              {[10, 20, 50].map((n) => (
-                <option key={n} value={n}>
-                  {n} / page
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
+      {/* Bulk Actions */}
       {selectedIds.length > 0 && (
-        <div className="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex flex-col sm:flex-row sm:items-center gap-3">
-          <span className="text-sm text-indigo-900 font-medium">{selectedIds.length} selected</span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleBulkDelete(selectedIds)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-red-50 text-sm text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete selected
-            </button>
-
-            <div className="inline-flex items-center gap-2">
-              <Flag className="w-4 h-4 text-slate-500" />
-              <select
-                onChange={(e) => {
-                  const next = e.target.value;
-                  if (next) handleBulkStatus(next);
-                  e.target.value = '';
-                }}
-                defaultValue=""
-                className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm text-slate-700"
-              >
-                <option value="" disabled>
-                  Change status…
-                </option>
-                <option value="normal">normal</option>
-                <option value="flagged">flagged</option>
-                <option value="hidden">hidden</option>
-                <option value="removed">removed</option>
-                <option value="review">review</option>
-              </select>
-            </div>
-          </div>
+        <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-6 flex items-center justify-between">
+          <span className="text-indigo-900 font-medium">{selectedIds.length} items selected</span>
+          <button
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 border border-red-100 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Selected
+          </button>
         </div>
       )}
 
-      <div className="mb-4">
-        {loading ? (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-sm text-slate-600">
-            Loading…
-          </div>
+      {/* Table Content */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        {loading && feedbacks.length === 0 ? (
+          <div className="p-12 text-center text-slate-500">Loading feedbacks...</div>
         ) : (
           <FeedbackTable
             feedbacks={feedbacks}
             selectedIds={selectedIds}
-            onToggleSelect={onToggleSelect}
-            onToggleSelectAll={onToggleSelectAll}
-            onView={(fb) => {
-              // eslint-disable-next-line no-alert
-              window.alert(`${fb.name} (${fb.email})\n\n${fb.message}`);
-            }}
-            onDelete={handleBulkDelete}
+            onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+            onToggleSelectAll={() => setSelectedIds(selectedIds.length === feedbacks.length ? [] : feedbacks.map(f => f._id))}
             onStatusChange={handleStatusChange}
+            onDelete={async (id) => {
+              if(window.confirm('Delete this feedback?')) {
+                await bulkDeleteFeedbacks([id]);
+                loadFeedbacks();
+              }
+            }}
           />
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <p className="text-sm text-slate-600">
-          Showing <span className="font-medium text-slate-900">{feedbacks.length}</span> of{' '}
-          <span className="font-medium text-slate-900">{total}</span>
-        </p>
-
-        <div className="flex items-center gap-2">
+      {/* Pagination */}
+      <div className="mt-6 flex items-center justify-between text-sm text-slate-500">
+        <span>Showing {feedbacks.length} of {total} results</span>
+        <div className="flex gap-2">
           <button
-            type="button"
-            onClick={() => gotoPage(page - 1)}
-            disabled={page === 0 || loading}
-            className={`px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-50 ${
-              page === 0 || loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Prev
+            Previous
           </button>
-          <span className="text-sm text-slate-600">
-            Page <span className="font-medium text-slate-900">{page + 1}</span> of{' '}
-            <span className="font-medium text-slate-900">{totalPages}</span>
-          </span>
           <button
-            type="button"
-            onClick={() => gotoPage(page + 1)}
-            disabled={page >= totalPages - 1 || loading}
-            className={`px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-50 ${
-              page >= totalPages - 1 || loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next
           </button>

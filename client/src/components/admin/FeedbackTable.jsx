@@ -20,7 +20,7 @@ const statusColors = {
  * @param {Array<string>} props.selectedIds
  * @param {Function} props.onToggleSelect
  * @param {Function} props.onToggleSelectAll
- * @param {Function} props.onView
+ * @param {Function} [props.onView] - Optional
  * @param {Function} props.onDelete
  * @param {Function} props.onStatusChange
  * @returns {JSX.Element}
@@ -37,13 +37,25 @@ const FeedbackTable = ({
   const allIds = feedbacks.map((f) => f._id);
   const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
 
+  if (!feedbacks || feedbacks.length === 0) {
+    return (
+      <div className="w-full text-center py-10 text-slate-500">
+        No feedback found.
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
             <th className="px-4 py-3 w-10">
-              <input type="checkbox" checked={allSelected} onChange={() => onToggleSelectAll(allIds)} />
+              <input 
+                type="checkbox" 
+                checked={allSelected} 
+                onChange={() => onToggleSelectAll(allIds)} 
+              />
             </th>
             <th className="px-4 py-3 text-left">ID</th>
             <th className="px-4 py-3 text-left">Author</th>
@@ -94,7 +106,7 @@ const FeedbackTable = ({
                   <div className="flex items-center gap-2">
                     {feedback.reportsCount > 0 ? (
                       <>
-                        <Flag className="w-4 h-4 text-red-500" />
+                        <ThumbsUp className="w-4 h-4 text-red-500" />
                         <span className="font-medium text-red-600">{feedback.reportsCount}</span>
                       </>
                     ) : (
@@ -118,18 +130,20 @@ const FeedbackTable = ({
                 <td className="px-4 py-3 text-slate-600">{formatDate(feedback.createdAt)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
+                    {onView && (
+                      <button
+                        type="button"
+                        onClick={() => onView(feedback)}
+                        className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
+                        title="View"
+                        aria-label="View"
+                      >
+                        <Eye className="w-4 h-4 text-slate-600" />
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => onView(feedback)}
-                      className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
-                      title="View"
-                      aria-label="View"
-                    >
-                      <Eye className="w-4 h-4 text-slate-600" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDelete([feedback._id])}
+                      onClick={() => onDelete(feedback._id)}
                       className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-red-50"
                       title="Delete"
                       aria-label="Delete"
@@ -141,14 +155,6 @@ const FeedbackTable = ({
               </tr>
             );
           })}
-
-          {feedbacks.length === 0 && (
-            <tr>
-              <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
-                No feedback found.
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
