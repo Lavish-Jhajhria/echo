@@ -1,10 +1,10 @@
 /**
- * Protect admin routes using localStorage/sessionStorage auth flag.
+ * Protect admin routes - redirect to home if not authenticated as admin.
  */
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { isAdminAuthenticated } from '../../utils/adminAuth';
+import authService from '../../services/authService';
 
 /**
  * ProtectedRoute wrapper.
@@ -13,7 +13,7 @@ import { isAdminAuthenticated } from '../../utils/adminAuth';
  * @returns {JSX.Element}
  */
 const ProtectedRoute = ({ children }) => {
-  if (!isAdminAuthenticated()) {
+  if (!authService.isAdminAuthenticated()) {
     return <Navigate to="/" replace />;
   }
 

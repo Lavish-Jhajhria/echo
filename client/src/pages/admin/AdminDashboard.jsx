@@ -7,6 +7,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import OverviewPage from './OverviewPage';
 import FeedbackManagementPage from './FeedbackManagementPage';
+import authService from '../../services/authService';
 
 /**
  * AdminDashboard.
@@ -17,6 +18,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    authService.logout();
     navigate('/', { replace: true });
   };
 

@@ -3,19 +3,20 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User as UserIcon, X } from 'lucide-react';
 import authService from '../services/authService';
 
 /**
- * AuthModal.
+ * AuthModal (login/signup; admin logs in with special email → redirects to /admin).
  * @param {Object} props
  * @param {boolean} props.isOpen
  * @param {Function} props.onClose
  * @param {Function} props.onSuccess
- * @param {Function} props.onAdminClick
  * @returns {JSX.Element|null}
  */
-const AuthModal = ({ isOpen, onClose, onSuccess, onAdminClick }) => {
+const AuthModal = ({ isOpen, onClose, onSuccess }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,8 +54,12 @@ const AuthModal = ({ isOpen, onClose, onSuccess, onAdminClick }) => {
       const response = await authService.login(loginData);
       if (response.success) {
         authService.saveUser(response.user);
-        onSuccess?.(response.user);
         onClose?.();
+        if (response.isAdmin || response.user?.isAdmin) {
+          navigate('/admin', { replace: true });
+        } else {
+          onSuccess?.(response.user);
+        }
       }
     } catch (err) {
       setError(err?.response?.data?.error || 'Login failed. Please try again.');
@@ -278,16 +283,6 @@ const AuthModal = ({ isOpen, onClose, onSuccess, onAdminClick }) => {
                 </button>
               </form>
             )}
-          </div>
-
-          <div className="p-4 border-t border-slate-700 text-center">
-            <button
-              type="button"
-              onClick={() => onAdminClick?.()}
-              className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-            >
-              Admin? Click here
-            </button>
           </div>
         </div>
       </div>

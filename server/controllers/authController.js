@@ -93,8 +93,11 @@ const register = async (req, res, next) => {
   }
 };
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'lavish@echo.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'lavish@admin';
+
 /**
- * Login user.
+ * Login user (handles both admin and regular users).
  * @param {Object} req - Express request
  * @param {Object} res - Express response
  * @param {Function} next - Next middleware
@@ -112,12 +115,34 @@ const login = async (req, res, next) => {
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Check for hardcoded admin credentials
+    if (normalizedEmail === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
+      const adminUser = {
+        userId: 'ADMIN-001',
+        firstName: 'Admin',
+        lastName: 'User',
+        email: ADMIN_EMAIL,
+        isAdmin: true,
+        lastLogin: new Date()
+      };
+      // eslint-disable-next-line no-console
+      console.log('✅ Admin logged in:', adminUser.email);
+      return res.status(200).json({
+        success: true,
+        user: adminUser,
+        isAdmin: true,
+        message: 'Admin login successful!'
+      });
+    }
+
+    // Regular user login - check database
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid email or password. Please register first.'
+        error: 'Invalid email or password. Please register if you don\'t have an account.'
       });
     }
 
@@ -132,16 +157,22 @@ const login = async (req, res, next) => {
     user.lastLogin = new Date();
     await user.save();
 
+    const userResponse = {
+      userId: user.userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      isAdmin: false,
+      lastLogin: user.lastLogin
+    };
+    // eslint-disable-next-line no-console
+    console.log('✅ User logged in:', userResponse.userId, userResponse.email);
+
     return res.status(200).json({
       success: true,
-      user: {
-        userId: user.userId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        lastLogin: user.lastLogin
-      },
-      message: 'Login successful'
+      user: userResponse,
+      isAdmin: false,
+      message: 'Login successful!'
     });
   } catch (error) {
     return next(error);

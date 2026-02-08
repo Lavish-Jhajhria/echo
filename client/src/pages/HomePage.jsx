@@ -9,7 +9,6 @@ import FeedbackForm from '../components/FeedbackForm';
 import FeedbackList from '../components/FeedbackList';
 import FeedbackFilters from '../components/FeedbackFilters';
 import { getAllFeedbacks, searchFeedbacks } from '../services/feedbackService';
-import AdminLoginModal from '../components/admin/AdminLoginModal';
 import AuthModal from '../components/AuthModal';
 import authService from '../services/authService';
 
@@ -32,9 +31,7 @@ const HomePage = () => {
     youOnly: false
   });
   const [userEmail, setUserEmail] = useState('');
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showAdminFromAuth, setShowAdminFromAuth] = useState(false);
 
   /**
    * Fetch all feedback from the API.
@@ -91,13 +88,16 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    // Restore logged-in user (if any)
+    // Restore logged-in user (if any); redirect admin to dashboard
     const user = authService.getLoggedInUser();
     if (user) {
       setCurrentUser(user);
-      setUserEmail(user.email);
+      setUserEmail(user.email || '');
+      if (user.isAdmin) {
+        navigate('/admin', { replace: true });
+      }
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     // Restore user's email (used for "You" quick filter + badges)
@@ -170,6 +170,7 @@ const HomePage = () => {
   const handleLogout = () => {
     authService.logout();
     setCurrentUser(null);
+    navigate('/', { replace: true });
   };
 
   return (
@@ -244,27 +245,10 @@ const HomePage = () => {
         />
       </section>
 
-      <AdminLoginModal
-        isOpen={showAdminLogin || showAdminFromAuth}
-        onClose={() => {
-          setShowAdminLogin(false);
-          setShowAdminFromAuth(false);
-        }}
-        onSuccess={() => {
-          setShowAdminLogin(false);
-          setShowAdminFromAuth(false);
-          navigate('/admin', { replace: true });
-        }}
-      />
-
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
-        onAdminClick={() => {
-          setShowAuthModal(false);
-          setShowAdminFromAuth(true);
-        }}
       />
     </main>
   );

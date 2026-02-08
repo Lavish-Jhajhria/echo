@@ -75,6 +75,21 @@ const logout = () => {
   window.localStorage.removeItem(USER_KEY);
 };
 
+/**
+ * Check if current user is admin.
+ * @returns {boolean}
+ */
+const isAdmin = () => {
+  const user = getLoggedInUser();
+  return Boolean(user && user.isAdmin === true);
+};
+
+/**
+ * Check if user is authenticated as admin (for admin route protection).
+ * @returns {boolean}
+ */
+const isAdminAuthenticated = () => isAdmin();
+
 export default {
   register,
   login,
@@ -82,6 +97,8 @@ export default {
   isAuthenticated,
   getLoggedInUser,
   saveUser,
-  logout
+  logout,
+  isAdmin,
+  isAdminAuthenticated
 };
 
