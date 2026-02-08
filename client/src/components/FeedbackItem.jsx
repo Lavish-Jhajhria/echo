@@ -47,6 +47,7 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
   const showYou = Boolean(currentUser?.userId)
     ? localFeedback.userId === currentUser.userId
     : false;
+  const isOwnFeedback = Boolean(currentUser?.userId && localFeedback.userId && localFeedback.userId === currentUser.userId);
 
   /**
    * Open confirm modal when user wants to delete.
@@ -66,21 +67,25 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
   };
 
   /**
-   * Delete feedback after user confirms.
+   * Delete feedback after user confirms (only for own feedback).
    * @returns {Promise<void>}
    */
   const handleConfirmDelete = async () => {
+    if (!currentUser) {
+      setError('You must be logged in to delete feedback');
+      return;
+    }
+    setShowModal(false);
     try {
       setIsDeleting(true);
       setError('');
-      await deleteFeedback(localFeedback._id);
+      await deleteFeedback(localFeedback._id, currentUser.userId);
 
       if (typeof onDeleted === 'function') {
         onDeleted(localFeedback._id);
       }
-      setShowModal(false);
     } catch (err) {
-      setError('Unable to delete feedback. Please try again.');
+      setError(err.response?.data?.error || 'Failed to delete feedback');
     } finally {
       setIsDeleting(false);
     }
@@ -153,15 +158,17 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleRequestDelete}
-            disabled={isDeleting}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-error p-1"
-            aria-label="Delete feedback"
-          >
-            <span className="inline-block text-lg leading-none">&times;</span>
-          </button>
+          {isOwnFeedback && (
+            <button
+              type="button"
+              onClick={handleRequestDelete}
+              disabled={isDeleting}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-error p-1"
+              aria-label="Delete feedback"
+            >
+              <span className="inline-block text-lg leading-none">&times;</span>
+            </button>
+          )}
         </header>
 
         <p className="text-sm text-slate-100 mb-3 leading-relaxed">{localFeedback.message}</p>
@@ -205,19 +212,6 @@ const FeedbackItem = ({ feedback, onDeleted }) => {
               </Icon>
               <span className="font-semibold">{commentCount}</span>
             </span>
-
-            <button
-              type="button"
-              className="inline-flex items-center justify-center w-9 h-8 rounded-md border border-slate-700 bg-slate-900/40 text-slate-300 hover:bg-slate-800 transition-colors"
-              aria-label="Bookmark (coming soon)"
-              title="Bookmark (coming soon)"
-            >
-              <Icon>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="w-4 h-4">
-                  <path d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2z" />
-                </svg>
-              </Icon>
-            </button>
 
             <button
               type="button"

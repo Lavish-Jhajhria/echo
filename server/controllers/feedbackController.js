@@ -248,8 +248,8 @@ const getFeedbackById = async (req, res, next) => {
 };
 
 /**
- * Delete a feedback entry by id.
- * @param {Object} req - Express request
+ * Delete a feedback entry by id (only by author).
+ * @param {Object} req - Express request (req.body.userId required)
  * @param {Object} res - Express response
  * @param {Function} next - Next middleware
  * @returns {Promise<void>}
@@ -257,6 +257,14 @@ const getFeedbackById = async (req, res, next) => {
 const deleteFeedback = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
 
     const feedback = await Feedback.findById(id);
 
@@ -267,7 +275,14 @@ const deleteFeedback = async (req, res, next) => {
       });
     }
 
-    await feedback.deleteOne();
+    if (feedback.userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'You can only delete your own feedback'
+      });
+    }
+
+    await Feedback.findByIdAndDelete(id);
 
     return res.status(200).json({
       success: true,

@@ -50,12 +50,15 @@ export const getAllFeedbacks = async () => {
 };
 
 /**
- * Delete a feedback by id.
+ * Delete a feedback by id (only author can delete).
  * @param {string} id - Feedback id
+ * @param {string} userId - User ID for authorization
  * @returns {Promise<Object>}
  */
-export const deleteFeedback = async (id) => {
-  const response = await axios.delete(`${API_BASE_URL}/api/feedbacks/${id}`);
+export const deleteFeedback = async (id, userId) => {
+  const response = await axios.delete(`${API_BASE_URL}/api/feedbacks/${id}`, {
+    data: { userId }
+  });
   return response.data;
 };
 
