@@ -4,9 +4,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const MONGODB_URI =
-  process.env.MONGODB_URI || 'mongodb://localhost:27017/feedback-collector';
-
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://echolavish:Lavish1100@cluster0.gj8ppij.mongodb.net/?appName=Cluster0";
 const User = require('../models/User');
 const Feedback = require('../models/Feedback');
 const Report = require('../models/Report');
