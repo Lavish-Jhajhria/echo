@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles for Echo Feedback Collector */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-navy-900 text-slate-100 font-sans antialiased;
+}
+
+.echo-gradient-button {
+  @apply bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-500 text-white font-semibold rounded-lg shadow-soft-lg transition-all duration-200;
+}
+
+.echo-card {
+  @apply bg-navy-700/80 backdrop-blur border border-slate-700/60 rounded-2xl shadow-soft-lg;
+}
+
+.echo-input {
+  @apply w-full rounded-lg bg-navy-800/70 border border-slate-700 text-slate-100 placeholder-slate-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition;
+}
+
+.echo-textarea {
+  @apply w-full rounded-lg bg-navy-800/70 border border-slate-700 text-slate-100 placeholder-slate-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition resize-none;
+}
+
+.echo-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.echo-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.echo-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.7);
+  border-radius: 9999px;
+}
+
+/* Modal animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-modal-in {
+  animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Additional zoom animation class */
+.animate-zoom-in {
+  animation: zoomIn 0.3s ease-out forwards;
+}
+
