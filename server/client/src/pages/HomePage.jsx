@@ -158,7 +158,7 @@ const HomePage = () => {
 
   return (
     <main className="relative max-w-6xl mx-auto px-4 py-10 sm:py-12 lg:py-16">
-     <div className="flex justify-end w-full mb-8 relative lg:static lg:w-auto lg:mb-0">
+      <div className="absolute top-6 right-4 sm:right-6">
         {currentUser ? (
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
@@ -188,8 +188,8 @@ const HomePage = () => {
         )}
       </div>
 
-      <header className="pt-8 sm:pt-0 mb-10 sm:mb-12 lg:mb-14">
-        <p className="mt-20 text-xs font-semibold tracking-[0.3em] text-primary-500 uppercase mb-4">
+      <header className="mb-10 sm:mb-12 lg:mb-14 text-center sm:text-left">
+        <p className="text-xs font-semibold tracking-[0.3em] text-primary-500 uppercase mb-4">
           Feedback Collector
         </p>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-3">
@@ -203,9 +203,6 @@ const HomePage = () => {
           space designed for deep listening.
         </p>
       </header>
-
-      {/* Mobile spacer to ensure auth button doesn't overlap header */}
-      <div className="sm:hidden h-8" />
 
       <FeedbackFilters
         filters={filters}
