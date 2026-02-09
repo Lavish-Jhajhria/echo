@@ -43,16 +43,16 @@ GET    /api/feedbacks/:id  - Get single feedback
 DELETE /api/feedbacks/:id  - Delete feedback
 ```
 
-## 🔐 Testing Credentials
+##  Testing Credentials
 
 The project comes with pre-configured accounts for testing different roles. You can use these credentials to explore the application features immediately after seeding the database.
 
-## 👑 Admin Access
+##  Admin Access
 Email: `lavish@echo.com`
 Password: `lavish@admin`
 Capabilities: Access the Admin Dashboard, view analytics, delete feedback, suspend users, and resolve reports.
 
-### 👤 User Access
+##  User Access
 Email: `priya.sharma@example.com`
 Password: `user@test`
 Capabilities: Submit feedback, like posts, and filter submission history.
