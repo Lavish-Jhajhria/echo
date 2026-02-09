@@ -188,7 +188,7 @@ const HomePage = () => {
         )}
       </div>
 
-      <header className="pt-20 sm:pt-0 mb-10 sm:mb-12 lg:mb-14">
+      <header className="pt-12 sm:pt-0 mb-10 sm:mb-12 lg:mb-14">
         <p className="mt-20 text-xs font-semibold tracking-[0.3em] text-primary-500 uppercase mb-4">
           Feedback Collector
         </p>
